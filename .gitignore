@@ -1,0 +1,54 @@
+# Compiled artifacts / payloads (build them from source, see docs/INSTALL.md)
+*.bin
+*.pkg
+*.jwt
+*.rld
+*.elf
+*.o
+*.a
+*.so
+*.exe
+*.dll
+*.zip
+
+# Keys, certificates, credential stores, device dumps
+*.pem
+*.key
+*.crt
+*.der
+*.p12
+*.pfx
+*.db
+*.sqlite
+*.dump
+creds/
+.env
+
+# Local research state / logs
+*.log
+auto_root.cmd
+shd18.cmd
+*.bak
+*.orig
+
+# Editor / OS / tooling
+.DS_Store
+Thumbs.db
+__pycache__/
+*.py[cod]
+.venv/
+node_modules/
+.vercel/
+.vscode/
+.idea/
+
+# Site build output (gerado por tools/build.mjs)
+dist/
+
+# payloads publicados por alvo (payload/<id>/): liberados de proposito,
+# exceto firmware da Roku
+!payload/
+!payload/**
+payload/**/*.pkg
+payload/**/*.jwt
+payload/**/update.roku

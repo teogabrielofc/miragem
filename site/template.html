@@ -1,0 +1,412 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#e7d2d8">
+<title>Miragem · para a sua TV</title>
+<style>
+@font-face{font-family:'Parisienne';font-style:normal;font-weight:400;font-display:swap;
+  src:url(data:font/woff2;base64,__PARISIENNE__) format('woff2')}
+:root{--ink:#372a40;--soft:rgba(55,42,64,.68);--faint:rgba(55,42,64,.46);--line:rgba(255,255,255,.6);--card:rgba(255,255,255,.55)}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;overflow-x:hidden}
+body{max-width:100%}
+body{margin:0;color:var(--ink);font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  background:linear-gradient(158deg,#f0d7d1 0%,#e7d2d8 26%,#cdc4dc 52%,#c7c6e0 72%,#ddd6e6 100%);
+  background-attachment:fixed;font-weight:450;line-height:1.5}
+.wrap{max-width:880px;margin:0 auto;padding:28px 20px 64px}
+header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:38px}
+.brand{font-family:'Parisienne',cursive;font-size:40px;line-height:1;color:#4b3a55}
+.tag{font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--faint);
+  border:1px solid var(--line);border-radius:999px;padding:6px 13px;background:rgba(255,255,255,.3)}
+.hero h1{margin:0 0 14px;font-size:clamp(30px,6vw,46px);line-height:1.1;font-weight:500;letter-spacing:-.02em}
+.hero p{margin:0;font-size:clamp(15px,2.2vw,18px);color:var(--soft);max-width:62ch}
+.steps{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:34px 0}
+@media (max-width:640px){.steps{grid-template-columns:1fr}}
+.step{padding:18px;border-radius:18px;background:var(--card);border:1px solid var(--line)}
+.step .n{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--faint)}
+.step b{display:block;margin:6px 0 6px;font-size:16px;font-weight:600}
+.step span{font-size:14px;color:var(--soft)}
+code{overflow-wrap:anywhere;word-break:break-word}
+.card{padding:24px;border-radius:22px;background:var(--card);border:1px solid var(--line);
+  box-shadow:0 24px 60px -40px rgba(52,36,60,.5);margin-bottom:18px}
+.card h2{margin:0 0 6px;font-size:20px;font-weight:600}
+.card p{margin:0 0 16px;color:var(--soft);font-size:14px}
+.drop{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;
+  padding:28px 16px;border:2px dashed rgba(255,255,255,.85);border-radius:16px;background:rgba(255,255,255,.25);
+  cursor:pointer;text-align:center;transition:background .15s,border-color .15s}
+.drop:hover,.drop.over{background:rgba(255,255,255,.45);border-color:#fff}
+.drop b{font-size:15px}
+.drop span{font-size:13px;color:var(--faint)}
+.drop input{display:none}
+.file{margin-top:12px;font-size:13px;color:var(--soft);word-break:break-all}
+.pill{display:inline-block;margin:3px 6px 0 0;padding:3px 10px;border-radius:999px;
+  background:rgba(255,255,255,.45);border:1px solid var(--line);font-size:12px;color:var(--soft)}
+button.primary{appearance:none;border:0;border-radius:999px;padding:15px 30px;font:inherit;font-weight:600;font-size:16px;
+  color:#3b2b43;background:linear-gradient(180deg,#fff,#fff4f1);cursor:pointer;
+  box-shadow:0 14px 30px -16px rgba(60,40,70,.55)}
+button.primary:disabled{opacity:.5;cursor:default}
+.note{margin-top:14px;font-size:13px;color:var(--faint)}
+.result{display:none}
+.result.on{display:block}
+.dl{display:inline-block;margin:6px 0 14px;padding:14px 26px;border-radius:999px;text-decoration:none;
+  font-weight:600;color:#123; background:#cfe9dc;border:1px solid #a9d8c2}
+pre{background:rgba(255,255,255,.5);border:1px solid var(--line);border-radius:12px;padding:14px;
+  font-size:12.5px;line-height:1.5;overflow:auto;white-space:pre-wrap;color:var(--soft)}
+details{margin-top:10px}
+summary{cursor:pointer;color:var(--soft);font-size:14px}
+footer{margin-top:40px;font-size:12px;color:var(--faint);text-align:center}
+.err{color:#a3505f;font-size:14px;margin-top:10px}
+</style>
+</head>
+<body>
+<style>
+.langs{display:flex;gap:4px}
+.langs button{border:1px solid transparent;background:rgba(255,255,255,.25);color:var(--faint);border-radius:999px;
+  padding:5px 9px;font:inherit;font-size:11px;letter-spacing:.08em;cursor:pointer}
+.langs button.on{background:rgba(255,255,255,.65);color:var(--ink);border-color:rgba(255,255,255,.85)}
+</style>
+<div class="wrap">
+  <header>
+    <div class="brand">miragem</div>
+    <div style="display:flex;gap:12px;align-items:center">
+      <span class="langs" id="langs"><button data-lang="pt">PT</button><button data-lang="en">EN</button><button data-lang="es">ES</button></span>
+      <div class="tag" data-i18n="tag">para a sua TV</div>
+    </div>
+  </header>
+
+  <section class="hero">
+    <h1 data-i18n="hero_title">Miragem na sua TV.</h1>
+    <p data-i18n="hero_sub">A gente aproveita o app interativo que a sua TV já guarda no USB e coloca o Miragem do lado. Sem dev mode, sem trocar de canal.</p>
+  </section>
+
+  <section class="steps">
+    <div class="step"><div class="n" data-i18n="s1n">Passo 1</div><b data-i18n="s1t">Guarde um app na TV</b><span data-i18n-html="s1d">Na TV, com o USB conectado, use "Carregamento rápido" (ou a opção de armazenar app interativo) em um canal que tenha Ginga.</span></div>
+    <div class="step"><div class="n" data-i18n="s2n">Passo 2</div><b data-i18n="s2t">Traga o USB pro PC</b><span data-i18n-html="s2d">O app fica em <code>ginga/installed/&lt;id&gt;/</code>. Pegue o arquivo <code>MANIFEST</code> dessa pasta.</span></div>
+    <div class="step"><div class="n" data-i18n="s3n">Passo 3</div><b data-i18n="s3t">Gere o pacote</b><span data-i18n="s3d">Envie o MANIFEST aqui. O site devolve um zip com o Miragem no mesmo formato.</span></div>
+    <div class="step"><div class="n" data-i18n="s4n">Passo 4</div><b data-i18n="s4t">Volte pra TV</b><span data-i18n-html="s4d">Extraia o zip na raiz do USB (juntando a pasta <code>ginga</code>) e abra "Carregamento rápido".</span></div>
+  </section>
+
+  <section class="card">
+    <h2 data-i18n="c1t">1. Envie o MANIFEST da sua TV</h2>
+    <p data-i18n-html="c1d">Arquivo <code>MANIFEST</code> de dentro de <code>ginga/installed/&lt;id&gt;/</code>. Ele só serve pra copiar os dados do seu canal (rede, serviço, etc.). Nada é enviado pra servidor nenhum: tudo acontece no seu navegador.</p>
+    <label class="drop" id="drop">
+      <input type="file" id="file" accept=".json,application/json,text/plain,*/*">
+      <b data-i18n="drop_b">Escolher o MANIFEST</b>
+      <span data-i18n="drop_s">ou arraste o arquivo aqui</span>
+    </label>
+    <div class="file" id="fileinfo"></div>
+    <div id="parsed"></div>
+    <div class="err" id="err"></div>
+    <div style="margin-top:18px;display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+      <button class="primary" id="gen" disabled data-i18n="gen">Gerar pacote</button>
+      <span class="note" id="gennote" data-i18n="gennote">Envie o MANIFEST pra liberar.</span>
+    </div>
+  </section>
+
+  <section class="card result" id="result">
+    <h2 data-i18n="c2t">2. Baixe e coloque no USB</h2>
+    <p data-i18n-html="c2d">O zip tem a pasta <code>ginga/</code> pronta e a pasta <code>ferramentas/</code> com as ferramentas de PC. Extraia na raiz do USB e junte com a pasta que já existe.</p>
+    <a class="dl" id="dl" download="miragem-usb.zip" href="#" data-i18n="dl">Baixar miragem-usb.zip</a>
+    <pre id="tree"></pre>
+    <details>
+      <summary data-i18n="q1s">Não aparece "Carregamento rápido"?</summary>
+      <pre data-i18n="q1a">Na TV, o menu fica na entrada Antena TV / opções do canal.
+Se o seu controle tiver o botão de opções, procure por "aplicativos interativos"
+ou "carregamento rápido". O app só aparece com o USB conectado.</pre>
+    </details>
+    <details>
+      <summary data-i18n="q2s">O instalador do Miragem precisa de quê?</summary>
+      <pre data-i18n="q2a">Por enquanto o instalador usa o PC na mesma rede rodando os servidores do
+Miragem (as portas 47127/47140/47190/47192/47193). O gerenciador funciona
+depois que o root sobe. A versão 100% sozinha (sem PC) ainda está em pesquisa.</pre>
+    </details>
+  </section>
+
+  <footer data-i18n="footer">Miragem · pesquisa no próprio aparelho · use só na sua TV</footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var MANAGER_B64 = "__MANAGER_B64__";
+  var INSTALLER_B64 = "__INSTALLER_B64__";
+  var TVSH_B64 = "__TVSH_B64__";
+  var TVCMD_B64 = "__TVCMD_B64__";
+
+  var STR = {
+    pt: {
+      tag:"para a sua TV",
+      hero_title:"Miragem na sua TV.",
+      hero_sub:"A gente aproveita o app interativo que a sua TV já guarda no USB e coloca o Miragem do lado. Sem dev mode, sem trocar de canal.",
+      s1n:"Passo 1", s1t:"Guarde um app na TV",
+      s1d:"Na TV, com o USB conectado, use \"Carregamento rápido\" (ou a opção de armazenar app interativo) em um canal que tenha Ginga.",
+      s2n:"Passo 2", s2t:"Traga o USB pro PC",
+      s2d:"O app fica em <code>ginga/installed/&lt;id&gt;/</code>. Pegue o arquivo <code>MANIFEST</code> dessa pasta.",
+      s3n:"Passo 3", s3t:"Gere o pacote",
+      s3d:"Envie o MANIFEST aqui. O site devolve um zip com o Miragem no mesmo formato.",
+      s4n:"Passo 4", s4t:"Volte pra TV",
+      s4d:"Extraia o zip na raiz do USB (juntando a pasta <code>ginga</code>) e abra \"Carregamento rápido\".",
+      c1t:"1. Envie o MANIFEST da sua TV",
+      c1d:"Arquivo <code>MANIFEST</code> de dentro de <code>ginga/installed/&lt;id&gt;/</code>. Ele só serve pra copiar os dados do seu canal (rede, serviço, etc.). Nada é enviado pra servidor nenhum: tudo acontece no seu navegador.",
+      drop_b:"Escolher o MANIFEST", drop_s:"ou arraste o arquivo aqui",
+      gen:"Gerar pacote", gennote:"Envie o MANIFEST pra liberar.",
+      c2t:"2. Baixe e coloque no USB", c2d:"O zip tem a pasta <code>ginga/</code> pronta e a pasta <code>ferramentas/</code> com as ferramentas de PC. Extraia na raiz do USB e junte com a pasta que já existe.",
+      dl:"Baixar miragem-usb.zip",
+      q1s:"Não aparece \"Carregamento rápido\"?",
+      q1a:"Na TV, o menu fica na entrada Antena TV / opções do canal.\nSe o seu controle tiver o botão de opções, procure por \"aplicativos interativos\"\nou \"carregamento rápido\". O app só aparece com o USB conectado.",
+      q2s:"O instalador do Miragem precisa de quê?",
+      q2a:"Por enquanto o instalador usa o PC na mesma rede rodando os servidores do\nMiragem (as portas 47127/47140/47190/47192/47193). O gerenciador funciona\ndepois que o root sobe. A versão 100% sozinha (sem PC) ainda está em pesquisa.",
+      footer:"Miragem · pesquisa no próprio aparelho · use só na sua TV",
+      err_kind:"Esse arquivo não parece um MANIFEST de app interativo.",
+      err_invalid:"Arquivo inválido.", err_build:"Falha ao gerar: ",
+      pill_app:"app:", pill_type:"tipo:", pill_host:"host:", pill_svc:"serviço:", pill_net:"rede:",
+      ready:"Pronto pra gerar.",
+      tree:"miragem-usb.zip\n├─ ginga/installed/\n│  ├─ {id1}/  (Miragem)\n│  └─ {id2}/  (Instalador do Miragem)\n├─ ferramentas/\n│  ├─ tvsh\n│  └─ tvcmd.py\n└─ LEIA-ME.txt\n\nTamanho: {size} KB",
+      rm_title:"MIRAGEM - pacote pro USB",
+      rm_steps:"1. Extraia o conteudo deste zip na raiz do USB (junto com a pasta \"ginga\" que ja existe).\n2. Voce vai ficar com:\n   ginga/installed/{id1}/   -> Miragem (gerenciador)\n   ginga/installed/{id2}/   -> Instalador do Miragem\n   ferramentas/tvsh         -> shell root da TV no PC (Python 3)\n   ferramentas/tvcmd.py     -> roda um comando na TV\n3. Conecte o USB na TV e abra \"Carregamento rapido\" (ou aplicativos interativos).\n4. Abra o \"Instalador do Miragem\" e aperte OK em Instalar.\n5. Depois abra o \"Miragem\" para gerenciar root / shell / apps.\n\nAS PASTAS\n  ginga/       -> os apps do USB que a TV carrega (Miragem e Instalador).\n  ferramentas/ -> ferramentas de PC; nao vao pra TV. Copie pra um PC com Python 3.\n\nFERRAMENTAS DE PC (Python 3)\n  tvsh\n    Abre o shell root da TV (PTY sobre TCP, porta 2222).\n    Uso: ROKU_HOST=<IP da TV> ./tvsh\n    Da pra setar o IP pela variavel ROKU_HOST ou com -h <IP>. Ctrl-] sai.\n  tvcmd.py\n    Roda UM comando na TV e imprime a saida.\n    Edite o IP no comeco do arquivo e rode: python3 tvcmd.py \"id\"\n\nO instalador usa o PC na mesma rede com os servidores do Miragem.\nNada aqui e enviado pra internet: o pacote foi gerado no seu navegador.",
+      rm_name:"LEIA-ME.txt"
+    },
+    en: {
+      tag:"for your TV",
+      hero_title:"Miragem on your TV.",
+      hero_sub:"We take the interactive app your TV already stores on the USB and put Miragem next to it. No dev mode, no channel switching.",
+      s1n:"Step 1", s1t:"Store an app on the TV",
+      s1d:"On the TV, with the USB connected, use \"Fast loading\" (or the store interactive app option) on a channel that has Ginga.",
+      s2n:"Step 2", s2t:"Bring the USB to the PC",
+      s2d:"The app lives in <code>ginga/installed/&lt;id&gt;/</code>. Grab the <code>MANIFEST</code> file from that folder.",
+      s3n:"Step 3", s3t:"Generate the package",
+      s3d:"Send the MANIFEST here. The site returns a zip with Miragem in the same format.",
+      s4n:"Step 4", s4t:"Back to the TV",
+      s4d:"Extract the zip into the USB root (merging the <code>ginga</code> folder) and open \"Fast loading\".",
+      c1t:"1. Send your TV's MANIFEST",
+      c1d:"The <code>MANIFEST</code> file from <code>ginga/installed/&lt;id&gt;/</code>. It is only used to copy your channel's data (network, service, etc.). Nothing is uploaded anywhere: everything happens in your browser.",
+      drop_b:"Choose the MANIFEST", drop_s:"or drop the file here",
+      gen:"Generate package", gennote:"Send the MANIFEST to unlock.",
+      c2t:"2. Download and put it on the USB", c2d:"The zip has the <code>ginga/</code> folder ready and a <code>ferramentas/</code> folder with the PC tools. Extract it into the USB root and merge with the existing folder.",
+      dl:"Download miragem-usb.zip",
+      q1s:"Can't find \"Fast loading\"?",
+      q1a:"On the TV, the menu is under the Antenna TV input / channel options.\nIf your remote has an options button, look for \"interactive apps\"\nor \"fast loading\". The app only shows with the USB connected.",
+      q2s:"What does the Miragem installer need?",
+      q2a:"For now the installer uses the PC on the same network running the Miragem\nservers (ports 47127/47140/47190/47192/47193). The manager works\nafter root is up. The fully standalone version (no PC) is still research.",
+      footer:"Miragem · research on your own device · use it only on your TV",
+      err_kind:"This file does not look like an interactive app MANIFEST.",
+      err_invalid:"Invalid file.", err_build:"Failed to generate: ",
+      pill_app:"app:", pill_type:"type:", pill_host:"host:", pill_svc:"service:", pill_net:"network:",
+      ready:"Ready to generate.",
+      tree:"miragem-usb.zip\n├─ ginga/installed/\n│  ├─ {id1}/  (Miragem)\n│  └─ {id2}/  (Miragem Installer)\n├─ ferramentas/\n│  ├─ tvsh\n│  └─ tvcmd.py\n└─ README.txt\n\nSize: {size} KB",
+      rm_title:"MIRAGEM - USB package",
+      rm_steps:"1. Extract this zip into the USB root (next to the existing \"ginga\" folder).\n2. You will end up with:\n   ginga/installed/{id1}/   -> Miragem (manager)\n   ginga/installed/{id2}/   -> Miragem Installer\n   ferramentas/tvsh         -> TV root shell on the PC (Python 3)\n   ferramentas/tvcmd.py     -> runs one command on the TV\n3. Plug the USB into the TV and open \"Fast loading\" (or interactive apps).\n4. Open \"Miragem Installer\" and press OK on Install.\n5. Then open \"Miragem\" to manage root / shell / apps.\n\nFOLDERS\n  ginga/       -> the USB apps the TV loads (Miragem and Installer).\n  ferramentas/ -> PC tools; they do not go on the TV. Copy them to a PC with Python 3.\n\nPC TOOLS (Python 3)\n  tvsh\n    Opens the TV root shell (PTY over TCP, port 2222).\n    Usage: ROKU_HOST=<TV IP> ./tvsh\n    Set the IP with the ROKU_HOST variable or with -h <IP>. Ctrl-] exits.\n  tvcmd.py\n    Runs ONE command on the TV and prints the output.\n    Edit the IP at the top of the file, then: python3 tvcmd.py \"id\"\n\nThe installer uses the PC on the same network with the Miragem servers.\nNothing here is uploaded: the package was generated in your browser.",
+      rm_name:"README.txt"
+    },
+    es: {
+      tag:"para tu TV",
+      hero_title:"Miragem en tu TV.",
+      hero_sub:"Aprovechamos la app interactiva que tu TV ya guarda en el USB y ponemos Miragem al lado. Sin dev mode, sin cambiar de canal.",
+      s1n:"Paso 1", s1t:"Guarda una app en la TV",
+      s1d:"En la TV, con el USB conectado, usa \"Carga rápida\" (o la opción de guardar app interactiva) en un canal con Ginga.",
+      s2n:"Paso 2", s2t:"Trae el USB al PC",
+      s2d:"La app está en <code>ginga/installed/&lt;id&gt;/</code>. Toma el archivo <code>MANIFEST</code> de esa carpeta.",
+      s3n:"Paso 3", s3t:"Genera el paquete",
+      s3d:"Envía el MANIFEST aquí. El sitio devuelve un zip con Miragem en el mismo formato.",
+      s4n:"Paso 4", s4t:"Vuelve a la TV",
+      s4d:"Extrae el zip en la raíz del USB (juntando la carpeta <code>ginga</code>) y abre \"Carga rápida\".",
+      c1t:"1. Envía el MANIFEST de tu TV",
+      c1d:"El archivo <code>MANIFEST</code> de <code>ginga/installed/&lt;id&gt;/</code>. Solo sirve para copiar los datos de tu canal (red, servicio, etc.). No se envía nada a ningún servidor: todo ocurre en tu navegador.",
+      drop_b:"Elegir el MANIFEST", drop_s:"o arrastra el archivo aquí",
+      gen:"Generar paquete", gennote:"Envía el MANIFEST para habilitar.",
+      c2t:"2. Descarga y ponlo en el USB", c2d:"El zip tiene la carpeta <code>ginga/</code> lista y una carpeta <code>ferramentas/</code> con las herramientas de PC. Extráelo en la raíz del USB y júntalo con la carpeta existente.",
+      dl:"Descargar miragem-usb.zip",
+      q1s:"¿No aparece \"Carga rápida\"?",
+      q1a:"En la TV, el menú está en la entrada Antena TV / opciones del canal.\nSi tu control tiene botón de opciones, busca \"aplicaciones interactivas\"\no \"carga rápida\". La app solo aparece con el USB conectado.",
+      q2s:"¿Qué necesita el instalador de Miragem?",
+      q2a:"Por ahora el instalador usa el PC en la misma red ejecutando los servidores\nde Miragem (puertos 47127/47140/47190/47192/47193). El gestor funciona\ndespués de que root sube. La versión totalmente sola (sin PC) sigue en investigación.",
+      footer:"Miragem · investigación en tu propio equipo · úsalo solo en tu TV",
+      err_kind:"Este archivo no parece un MANIFEST de app interactiva.",
+      err_invalid:"Archivo inválido.", err_build:"Error al generar: ",
+      pill_app:"app:", pill_type:"tipo:", pill_host:"host:", pill_svc:"servicio:", pill_net:"red:",
+      ready:"Listo para generar.",
+      tree:"miragem-usb.zip\n├─ ginga/installed/\n│  ├─ {id1}/  (Miragem)\n│  └─ {id2}/  (Instalador de Miragem)\n├─ ferramentas/\n│  ├─ tvsh\n│  └─ tvcmd.py\n└─ LEEME.txt\n\nTamaño: {size} KB",
+      rm_title:"MIRAGEM - paquete para USB",
+      rm_steps:"1. Extrae este zip en la raiz del USB (junto a la carpeta \"ginga\" existente).\n2. Te quedara:\n   ginga/installed/{id1}/   -> Miragem (gestor)\n   ginga/installed/{id2}/   -> Instalador de Miragem\n   ferramentas/tvsh         -> shell root de la TV en el PC (Python 3)\n   ferramentas/tvcmd.py     -> ejecuta un comando en la TV\n3. Conecta el USB en la TV y abre \"Carga rapida\" (o aplicaciones interactivas).\n4. Abre \"Instalador de Miragem\" y pulsa OK en Instalar.\n5. Despues abre \"Miragem\" para gestionar root / shell / apps.\n\nLAS CARPETAS\n  ginga/       -> las apps del USB que carga la TV (Miragem e Instalador).\n  ferramentas/ -> herramientas de PC; no van a la TV. Copialas a un PC con Python 3.\n\nHERRAMIENTAS DE PC (Python 3)\n  tvsh\n    Abre el shell root de la TV (PTY sobre TCP, puerto 2222).\n    Uso: ROKU_HOST=<IP de la TV> ./tvsh\n    Puedes poner la IP con la variable ROKU_HOST o con -h <IP>. Ctrl-] sale.\n  tvcmd.py\n    Ejecuta UN comando en la TV e imprime la salida.\n    Edita la IP al inicio del archivo y ejecuta: python3 tvcmd.py \"id\"\n\nEl instalador usa el PC en la misma red con los servidores de Miragem.\nNada se envia a internet: el paquete se genero en tu navegador.",
+      rm_name:"LEEME.txt"
+    }
+  };
+  var lang = 'pt';
+  try{ lang = localStorage.getItem('miragem.lang') || 'pt'; }catch(e){}
+  if (!STR[lang]) lang = 'pt';
+  function T(k){ return (STR[lang] && STR[lang][k]) || STR.pt[k] || k; }
+  function applyLang(){
+    document.documentElement.lang = lang;
+    Array.prototype.forEach.call(document.querySelectorAll('[data-i18n]'), function(el){
+      el.textContent = T(el.getAttribute('data-i18n'));
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-i18n-html]'), function(el){
+      el.innerHTML = T(el.getAttribute('data-i18n-html'));
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('#langs button'), function(b){
+      b.className = (b.getAttribute('data-lang') === lang) ? 'on' : '';
+    });
+    if (state.src) showParsed(state.src, state.fileName || '');
+    if (lastTree) $('#tree').textContent = lastTree;
+  }
+  function setLang(l){
+    if (!STR[l]) return;
+    lang = l;
+    try{ localStorage.setItem('miragem.lang', l); }catch(e){}
+    applyLang();
+  }
+
+  var $ = function(s){ return document.querySelector(s); };
+  var state = { src:null, fileName:'' };
+  var lastTree = '';
+
+  function b64bytes(b64){
+    var bin = atob(b64), n = bin.length, out = new Uint8Array(n);
+    for (var i=0;i<n;i++) out[i] = bin.charCodeAt(i);
+    return out;
+  }
+  function hexid(host, app){
+    var v = ((host & 0xFF) << 16) | (app & 0xFFFF);
+    var s = v.toString(16).toUpperCase();
+    while (s.length < 12) s = '0' + s;
+    return s;
+  }
+  function manifestFor(name, app, sizeKB){
+    var src = state.src || {};
+    var host = (src.appIds && src.appIds[0] && typeof src.appIds[0].host === 'number') ? src.appIds[0].host : 10;
+    var id = hexid(host, app);
+    return {
+      appName: name, appIcon: "", appType: "GingaHTML5", appEntryPoint: "index.html", appSize: sizeKB,
+      appIds: [{ host: host, appId: app }], id: id,
+      location: (typeof src.location === 'number') ? src.location : 0,
+      privateBase: src.privateBase || "installed", lru: 1, preinstalled: false,
+      packageType: 8, downloadStatus: 2, controlCode: 2, icon_flags: 0, DSITransactionID: 0,
+      originalNetworkID: (typeof src.originalNetworkID === 'number') ? src.originalNetworkID : 0,
+      serviceID: (typeof src.serviceID === 'number') ? src.serviceID : 0,
+      aitPid: (typeof src.aitPid === 'number') ? src.aitPid : 0,
+      serviceContextId: src.serviceContextId || "", baseDir: "/", classpathExtension: "", profiles: ""
+    };
+  }
+  function metaFor(){
+    return { carouselId: 3, objects: [
+      { moduleId: 2, moduleVersion: 13, objectKey: 0, objectKind: "dir", path: "" },
+      { moduleId: 1, moduleVersion: 13, objectKey: 1, objectKind: "fil", path: "index.html" } ] };
+  }
+
+  var CRC = (function(){
+    var t = new Uint32Array(256);
+    for (var n=0;n<256;n++){ var c=n; for (var k=0;k<8;k++) c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1); t[n]=c>>>0; }
+    return t;
+  })();
+  function crc32(buf){ var c=0xFFFFFFFF; for (var i=0;i<buf.length;i++) c=CRC[(c^buf[i])&0xFF]^(c>>>8); return (c^0xFFFFFFFF)>>>0; }
+  function te(str){ var b=new Uint8Array(str.length); for (var i=0;i<str.length;i++) b[i]=str.charCodeAt(i)&0xFF; return b; }
+  function zip(files){
+    var parts=[], central=[], offset=0;
+    var now=new Date();
+    var dosTime=((now.getHours()&31)<<11)|((now.getMinutes()&63)<<5)|((now.getSeconds()/2)&31);
+    var dosDate=(((now.getFullYear()-1980)&127)<<9)|(((now.getMonth()+1)&15)<<5)|(now.getDate()&31);
+    files.forEach(function(f){
+      var name=te(f.name), data=f.data, crc=crc32(data);
+      var mode=(typeof f.mode==='number')?f.mode:0x81A4; /* 0100644 */
+      var lh=new Uint8Array(30+name.length), dv=new DataView(lh.buffer);
+      dv.setUint32(0,0x04034b50,true); dv.setUint16(4,20,true); dv.setUint16(6,0x0800,true); dv.setUint16(8,0,true);
+      dv.setUint16(10,dosTime,true); dv.setUint16(12,dosDate,true); dv.setUint32(14,crc,true);
+      dv.setUint32(18,data.length,true); dv.setUint32(22,data.length,true);
+      dv.setUint16(26,name.length,true); dv.setUint16(28,0,true); lh.set(name,30);
+      parts.push(lh,data);
+      var ch=new Uint8Array(46+name.length), cv=new DataView(ch.buffer);
+      cv.setUint32(0,0x02014b50,true); cv.setUint16(4,0x0314,true); cv.setUint16(6,20,true); cv.setUint16(8,0x0800,true);
+      cv.setUint16(10,0,true); cv.setUint16(12,dosTime,true); cv.setUint16(14,dosDate,true); cv.setUint32(16,crc,true);
+      cv.setUint32(20,data.length,true); cv.setUint32(24,data.length,true); cv.setUint16(28,name.length,true);
+      cv.setUint16(30,0,true); cv.setUint16(32,0,true); cv.setUint16(34,0,true); cv.setUint16(36,0,true);
+      cv.setUint32(38,mode<<16,true); cv.setUint32(42,offset,true); ch.set(name,46);
+      central.push(ch); offset+=lh.length+data.length;
+    });
+    var cdSize=central.reduce(function(a,b){ return a+b.length; },0);
+    var eocd=new Uint8Array(22), ev=new DataView(eocd.buffer);
+    ev.setUint32(0,0x06054b50,true); ev.setUint16(8,files.length,true); ev.setUint16(10,files.length,true);
+    ev.setUint32(12,cdSize,true); ev.setUint32(16,offset,true);
+    return new Blob(parts.concat(central,[eocd]),{type:'application/zip'});
+  }
+  function jsonBytes(o){ return te(JSON.stringify(o, null, '\t')); }
+
+  function build(){
+    var mgr=b64bytes(MANAGER_B64), inst=b64bytes(INSTALLER_B64);
+    var tvsh=b64bytes(TVSH_B64), tvcmd=b64bytes(TVCMD_B64);
+    var m1=manifestFor('Miragem',200,Math.round(mgr.length/1024));
+    var m2=manifestFor('Instalador do Miragem',201,Math.round(inst.length/1024));
+    var id1=m1.id, id2=m2.id;
+    var readme = T('rm_title') + '\n\n' + T('rm_steps').split('{id1}').join(id1).split('{id2}').join(id2);
+    var files=[
+      {name:'ginga/installed/'+id1+'/MANIFEST', data:jsonBytes(m1)},
+      {name:'ginga/installed/'+id1+'/_carousel_metadata.json', data:jsonBytes(metaFor())},
+      {name:'ginga/installed/'+id1+'/index.html', data:mgr},
+      {name:'ginga/installed/'+id2+'/MANIFEST', data:jsonBytes(m2)},
+      {name:'ginga/installed/'+id2+'/_carousel_metadata.json', data:jsonBytes(metaFor())},
+      {name:'ginga/installed/'+id2+'/index.html', data:inst},
+      {name:'ferramentas/tvsh', data:tvsh, mode:0x81ED},      /* 0100755 */
+      {name:'ferramentas/tvcmd.py', data:tvcmd, mode:0x81ED}, /* 0100755 */
+      {name:T('rm_name'), data:te(readme)}
+    ];
+    var blob=zip(files);
+    $('#dl').href=URL.createObjectURL(blob);
+    lastTree = T('tree').split('{id1}').join(id1).split('{id2}').join(id2).split('{size}').join((blob.size/1024).toFixed(0));
+    $('#tree').textContent=lastTree;
+    $('#result').classList.add('on');
+    $('#result').scrollIntoView({behavior:'smooth',block:'start'});
+    $('#dl').click();
+  }
+
+  function showParsed(j, fname){
+    $('#fileinfo').textContent = fname + ' · ' + (JSON.stringify(j).length/1024).toFixed(1) + ' KB';
+    var host=(j.appIds && j.appIds[0]) ? j.appIds[0].host : '?';
+    $('#parsed').innerHTML =
+      '<span class="pill">'+T('pill_app')+' '+(j.appName||'—')+'</span>'+
+      '<span class="pill">'+T('pill_type')+' '+(j.appType||'—')+'</span>'+
+      '<span class="pill">'+T('pill_host')+' '+host+'</span>'+
+      '<span class="pill">'+T('pill_svc')+' '+(j.serviceID==null?'—':j.serviceID)+'</span>'+
+      '<span class="pill">'+T('pill_net')+' '+(j.originalNetworkID==null?'—':j.originalNetworkID)+'</span>';
+  }
+  function parse(text, fname){
+    $('#err').textContent='';
+    try{
+      var j=JSON.parse(text);
+      if(!j || typeof j!=='object' || !j.appType) throw new Error(T('err_kind'));
+      state.src=j; state.fileName=fname;
+      showParsed(j, fname);
+      $('#gen').disabled=false;
+      $('#gennote').textContent=T('ready');
+    }catch(e){
+      state.src=null; state.fileName='';
+      $('#gen').disabled=true;
+      $('#gennote').textContent=T('gennote');
+      $('#parsed').innerHTML='';
+      $('#err').textContent=e.message||T('err_invalid');
+    }
+  }
+  function read(file){
+    var r=new FileReader();
+    r.onload=function(){ parse(String(r.result), file.name); };
+    r.readAsText(file);
+  }
+
+  var drop=$('#drop');
+  $('#file').addEventListener('change', function(e){ if(e.target.files&&e.target.files[0]) read(e.target.files[0]); });
+  ['dragenter','dragover'].forEach(function(ev){ drop.addEventListener(ev,function(e){ e.preventDefault(); drop.classList.add('over'); }); });
+  ['dragleave','drop'].forEach(function(ev){ drop.addEventListener(ev,function(e){ e.preventDefault(); drop.classList.remove('over'); }); });
+  drop.addEventListener('drop', function(e){ if(e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files[0]) read(e.dataTransfer.files[0]); });
+  $('#gen').addEventListener('click', function(){
+    if(!state.src) return;
+    try{ build(); }catch(e){ $('#err').textContent=T('err_build')+(e.message||e); }
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('#langs button'), function(b){
+    b.addEventListener('click', function(){ setLang(b.getAttribute('data-lang')); });
+  });
+
+  applyLang();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "updated": "2026-11-15",
+  "targets": [
+    {
+      "id": "h536x-15.0.4.5537",
+      "model": "H536X / PTV24G5YR2CP",
+      "os": "15.0.4.5537",
+      "build": "G1G.04E05537A",
+      "kernel": "4.9.118",
+      "arch": "armv7",
+      "kimage": "no KASLR",
+      "verified": ["read", "root", "chroot-escape"],
+      "offsets": {
+        "_stext": "0x80100000",
+        "init_cred": "0x8092f2bc",
+        "tcp_wmem_data": "0x8098750c",
+        "__per_cpu_offset": "0x8091e2e4",
+        "runqueues": "0x808bb1c0",
+        "rq_curr": "0x4a0",
+        "rq_idle": "0x4a4",
+        "task_fs": "0x44c",
+        "task_nsproxy": "0x454",
+        "task_real_cred": "0x4cc",
+        "task_cred": "0x510",
+        "fs_root": "0x14",
+        "mnt_namespace_root": "0x10",
+        "rb_erase": "0x802ea430",
+        "current_chrooted": "0x801e86c8",
+        "page_offset": "0x80000000",
+        "task_size": "0x7EA00000",
+        "thread_size": "0x2000"
+      }
+    }
+  ]
+}

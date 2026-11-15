@@ -1,0 +1,96 @@
+#!/usr/bin/env python3
+"""tvsh - interactive root shell on the Roku TV (PTY over TCP).
+
+Usage: ./tvsh [-h HOST] [-p PORT] [-w SECONDS]
+Exit:  Ctrl-]
+"""
+import os
+import select
+import socket
+import sys
+import termios
+import time
+import tty
+
+HOST = os.environ.get("ROKU_HOST", "192.168.1.100")
+PORT = int(os.environ.get("ROKU_PORT", "2222"))
+WAIT = float(os.environ.get("ROKU_WAIT", "0") or 0)
+
+args = sys.argv[1:]
+while args:
+    a = args.pop(0)
+    if a in ("-h", "--host") and args:
+        HOST = args.pop(0)
+    elif a in ("-p", "--port") and args:
+        PORT = int(args.pop(0))
+    elif a in ("-w", "--wait") and args:
+        WAIT = float(args.pop(0))
+    elif a in ("-?", "--help"):
+        print(__doc__)
+        sys.exit(0)
+
+
+def connect(host, port, wait):
+    """Tenta conectar; com wait > 0 fica tentando ate o shell root subir."""
+    deadline = time.time() + max(0.0, wait)
+    told = False
+    while True:
+        try:
+            return socket.create_connection((host, port), timeout=8)
+        except OSError as e:
+            if time.time() >= deadline:
+                sys.stderr.write(f"\ntvsh: {host}:{port}: {e}\n")
+                sys.stderr.write(
+                    "Abra a pagina GINGA LAB na TV (entrada Antena TV) e aperte OK\n"
+                    "no controle; o exploit sobe o shell root na 2222.\n"
+                )
+                sys.exit(1)
+            if not told:
+                sys.stderr.write(
+                    "tvsh: esperando o shell root na 2222 (aperte OK na TV)...\n"
+                )
+                told = True
+            sys.stderr.write(".")
+            sys.stderr.flush()
+            time.sleep(2)
+
+
+s = connect(HOST, PORT, WAIT)
+s.setblocking(False)
+
+fd = sys.stdin.fileno()
+old = termios.tcgetattr(fd)
+tty.setraw(fd)
+
+# Ajusta o PTY do outro lado ao tamanho do terminal local.
+try:
+    cols, rows = os.get_terminal_size()
+    s.sendall(f"stty cols {cols} rows {rows} 2>/dev/null\n".encode())
+except OSError:
+    pass
+
+sys.stdout.write("\r\n*** root@roku (Ctrl-] para sair) ***\r\n")
+sys.stdout.flush()
+
+try:
+    while True:
+        r, _, _ = select.select([s, fd], [], [], 0.2)
+        if s in r:
+            data = s.recv(65536)
+            if not data:
+                break
+            os.write(sys.stdout.fileno(), data)
+        if fd in r:
+            data = os.read(fd, 65536)
+            if not data:
+                break
+            if b"\x1d" in data:  # Ctrl-]
+                break
+            s.sendall(data)
+finally:
+    try:
+        termios.tcsetattr(fd, termios.TCSADRAIN, old)
+    except Exception:
+        pass
+    s.close()
+    sys.stdout.write("\r\n")

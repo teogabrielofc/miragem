@@ -1,0 +1,65 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>GINGA LAB</title>
+<style>
+html,body{margin:0;background:#040b16;color:#9fe;font:16px/1.45 ui-monospace,Menlo,Consolas,monospace}
+#wrap{padding:20px}
+#hdr{font-size:26px;font-weight:800;color:#6cf;letter-spacing:1px}
+#state{font-size:34px;font-weight:800;color:#fd4;margin:12px 0 4px}
+#hint{color:#7ad;font-size:15px;margin-bottom:14px}
+button{font:800 26px ui-monospace,monospace;padding:26px 54px;margin:0 10px 10px 0;border:0;border-radius:12px;background:#2ecc71;color:#031;cursor:pointer}
+button.sec{font-size:16px;padding:12px 20px;background:#3498db;color:#fff}
+button:active{transform:scale(.98)}
+#term{background:#02060c;border:1px solid #123;padding:10px;height:54vh;overflow:auto;white-space:pre-wrap;word-break:break-all;color:#8fd;margin-top:10px}
+.b{color:#4af}.g{color:#3f6}.r{color:#f66}.y{color:#fd4}
+</style></head><body><div id="wrap">
+<div id="hdr">GINGA LAB</div>
+<div id="state">PRONTO</div>
+<div id="hint">Aperte OK no controle (ou clique no botão) para rodar o /cmd. Nada roda sozinho.</div>
+<button id="go">&#9654; RODAR</button>
+<button id="test" class="sec">TESTAR /cmd</button>
+<div id="term"></div>
+</div>
+<script>
+const term=document.getElementById('term');
+const state=document.getElementById('state');
+let running=false;
+function log(s,cls){const t=new Date().toLocaleTimeString('pt-BR');const d=document.createElement('div');if(cls)d.className=cls;d.textContent='['+t+'] '+s;term.appendChild(d);term.scrollTop=term.scrollHeight;}
+async function run(){
+  if(running) return; running=true;
+  state.textContent='RODANDO...'; state.style.color='#fd4';
+  log('buscando /cmd ...','y');
+  let code='';
+  try{ const ctl=new AbortController(); const to=setTimeout(function(){try{ctl.abort();}catch(e){}},30000); let r; try{ r=await fetch('/cmd?t='+Date.now(),{cache:'no-store',signal:ctl.signal}); } finally { clearTimeout(to); } code=await r.text(); log('/cmd: '+r.status+' '+code.length+' B','b'); }
+  catch(e){ log('fetch /cmd ERR: '+e,'r'); state.textContent='ERRO FETCH'; state.style.color='#f66'; running=false; return; }
+  if(!code.trim()){ log('cmd vazio','r'); state.textContent='CMD VAZIO'; state.style.color='#f66'; running=false; return; }
+  log('eval...','y');
+  let res;
+  try{ res=await eval('(async()=>{'+code+'})()'); }
+  catch(e){ res='ERR:'+(e&&e.stack?e.stack:e); }
+  const s=String(res);
+  log('res: '+s.slice(0,3000), s.indexOf('ERR')===0?'r':'g');
+  state.textContent='OK'; state.style.color='#3f6';
+  try{ fetch('/beacon',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cmd:code.slice(0,4000),res:s.slice(0,8000)})}).then(function(r){return r.text();}).catch(function(){}); }catch(e){ log('beacon ERR: '+e,'r'); }
+  running=false;
+}
+async function testCmd(){
+  log('testando /cmd ...','y');
+  try{ const r=await fetch('/cmd?t='+Date.now(),{cache:'no-store'}); const t=await r.text(); log('/cmd TEST: '+r.status+' '+t.length+' B: '+t.slice(0,120).replace(/\n/g,' '),'b'); state.textContent='CMD OK'; }
+  catch(e){ log('/cmd TEST ERR: '+e,'r'); state.textContent='FETCH ERR'; }
+}
+document.getElementById('go').onclick=run;
+document.getElementById('test').onclick=testCmd;
+document.addEventListener('keydown',function(e){
+  log('key '+(e.key||'')+' code '+e.keyCode,'y');
+  try{ fetch('/beacon',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cmd:'KEYEV',res:(e.key||'')+':'+e.keyCode})}).then(function(r){return r.text();}).catch(function(){}); }catch(e){}
+  e.preventDefault();
+  run();
+},false);
+try{ fetch('/beacon',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cmd:'PAGELOAD',res:(navigator.userAgent||'')+' t='+Date.now()})}).then(function(r){return r.text();}).catch(function(){}); }catch(e){}
+try{ document.getElementById('go').focus(); }catch(e){}
+/* AUTORUN */
+try{ setTimeout(function(){ try{ if(!running){ log('AUTORUN','y'); run(); } }catch(e){} }, 2500); }catch(e){}
+
+log('page carregada: '+navigator.userAgent,'g');
+log('origin: '+location.origin,'b');
+</script></body></html>

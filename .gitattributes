@@ -1,0 +1,10 @@
+# normalize line endings in the repo, keep binaries intact
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.woff2 binary
+*.rld binary
+*.arm binary
+*.zip binary
+*.bin binary

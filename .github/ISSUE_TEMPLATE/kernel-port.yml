@@ -1,0 +1,96 @@
+name: Kernel port
+description: Registrar ou pedir port do GhostLock para outro modelo/build de Roku
+title: "[kernel] "
+labels: ["kernel-port"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use este formulário para **registrar um port** ou **pedir ajuda** com
+        outro kernel. Não anexe firmware, `.pkg`/`.jwt`, chaves ou dumps.
+
+        Antes de abrir: leia `docs/PORTING.md` e `docs/KERNELS.md`. O Miragem
+        roda em TVs Roku com Ginga no OS 15.0.4; o único kernel verificado hoje
+        é o do H536X / PTV24G5YR2CP (15.0.4.5537, Linux 4.9.118).
+
+  - type: input
+    id: model
+    attributes:
+      label: Modelo da TV
+      description: Modelo comercial e/ou codinome reportado pela TV.
+      placeholder: "Philco PTV24G5YR2CP / Roku H536X"
+    validations:
+      required: true
+
+  - type: input
+    id: os
+    attributes:
+      label: Roku OS e build
+      description: Versão reportada pela TV (não use SoftwareUpdate/CurrVersion do LinkDB).
+      placeholder: "15.0.4.5537 / G1G.04E05537A"
+    validations:
+      required: true
+
+  - type: input
+    id: kernel
+    attributes:
+      label: Kernel
+      description: Saída de uname -r (ou versão extraída do update.roku).
+      placeholder: "4.9.118"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: arch
+    attributes:
+      label: Arquitetura
+      options:
+        - armv7
+        - aarch64
+        - outro (descrever abaixo)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: kaslr
+    attributes:
+      label: KASLR
+      options:
+        - "não"
+        - "sim"
+        - não sei
+    validations:
+      required: true
+
+  - type: input
+    id: update
+    attributes:
+      label: Origem do update.roku
+      description: Como você obteve o arquivo (tvupdate.roku.com, captura do fluxo, etc.). Não cole link direto de firmware.
+      placeholder: "tvupdate.roku.com, modelo/serial do meu aparelho"
+    validations:
+      required: false
+
+  - type: textarea
+    id: status
+    attributes:
+      label: O que já funciona
+      description: Leitura 4+4? root? escape do chroot? Cole o log (sem serial/MAC/IP público).
+      placeholder: |
+        read 0x8092f2b8 -> ...
+        id -> uid=0
+        pwd -> /
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Segurança
+      options:
+        - label: É a minha própria TV e não vou rodar em aparelho de terceiros.
+          required: true
+        - label: Não vou anexar firmware, .pkg/.jwt, chaves ou dumps.
+          required: true
+        - label: Entendo que offsets errados podem dar panic/corromper a TV.
+          required: true

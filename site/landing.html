@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#e7d2d8">
+<title>Miragem · root e gerenciador para TVs Roku com Ginga</title>
+<meta name="description" content="Miragem instala root e um gerenciador homebrew em TVs Roku com Ginga no Roku OS 15.0.4. Verificado no H536X / Philco PTV24G5YR2CP; outros modelos portam o GhostLock.">
+<link rel="icon" href="assets/logo.png">
+<style>
+@font-face{font-family:'Parisienne';font-style:normal;font-weight:400;font-display:swap;
+  src:url(data:font/woff2;base64,__FONT__) format('woff2')}
+:root{--ink:#372a40;--soft:rgba(55,42,64,.7);--faint:rgba(55,42,64,.48);--line:rgba(255,255,255,.62);
+  --card:rgba(255,255,255,.55);--ok:#2f7d5b;--warn:#a3505f;--gold:#8a6a2f;--brand:#4b3a55}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;color:var(--ink);font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  font-weight:450;line-height:1.55;
+  background:linear-gradient(158deg,#f0d7d1 0%,#e7d2d8 26%,#cdc4dc 52%,#c7c6e0 72%,#ddd6e6 100%);
+  background-attachment:fixed;min-height:100%}
+a{color:inherit}
+.wrap{max-width:1080px;margin:0 auto;padding:clamp(18px,3vw,34px) clamp(18px,4vw,40px) 60px}
+header{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:12px;text-decoration:none}
+.brand img{width:44px;height:auto;border-radius:11px;box-shadow:0 10px 24px -14px rgba(60,40,70,.6)}
+.brand b{font-family:'Parisienne',cursive;font-weight:400;font-size:34px;line-height:1;color:var(--brand)}
+nav{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:13px}
+nav a{padding:7px 12px;border-radius:999px;text-decoration:none;color:var(--soft);border:1px solid transparent}
+nav a:hover,nav a:focus-visible{background:rgba(255,255,255,.45);border-color:var(--line);color:var(--ink);outline:none}
+.langs{display:flex;gap:3px;margin-left:6px}
+.langs button{border:1px solid transparent;background:rgba(255,255,255,.22);color:var(--faint);border-radius:999px;
+  padding:5px 9px;font:inherit;font-size:11px;letter-spacing:.08em;cursor:pointer}
+.langs button.on{background:rgba(255,255,255,.65);color:var(--ink);border-color:rgba(255,255,255,.85)}
+
+.hero{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:clamp(22px,4vw,54px);
+  align-items:center;padding:clamp(34px,6vw,76px) 0 clamp(22px,3vw,38px)}
+@media (max-width:820px){.hero{grid-template-columns:1fr;padding-top:34px}}
+.eyebrow{font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:var(--faint);margin:0 0 14px}
+h1{margin:0;font-size:clamp(34px,5.4vw,60px);line-height:1.04;letter-spacing:-.03em;font-weight:500}
+h1 em{font-style:normal;color:var(--brand)}
+.lede{margin:18px 0 0;font-size:clamp(15px,1.7vw,19px);color:var(--soft);max-width:54ch}
+.cta{display:flex;gap:12px;flex-wrap:wrap;margin-top:26px}
+.btn{display:inline-flex;align-items:center;gap:9px;text-decoration:none;font-weight:600;font-size:17px;
+  padding:15px 30px;border-radius:999px;color:#3b2b43;border:1px solid rgba(255,255,255,.9);
+  background:linear-gradient(180deg,#fff,#fff4f1);box-shadow:0 14px 30px -16px rgba(60,40,70,.6)}
+.btn:focus-visible{outline:none;box-shadow:0 0 0 5px rgba(255,255,255,.6),0 14px 30px -16px rgba(60,40,70,.6)}
+.btn.ghost{background:rgba(255,255,255,.28);box-shadow:none;font-weight:500;font-size:15px;padding:13px 22px}
+.chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:22px}
+.chip{font-size:12px;color:var(--soft);background:rgba(255,255,255,.42);border:1px solid var(--line);
+  border-radius:999px;padding:5px 12px}
+.chip b{color:var(--ink);font-weight:600}
+
+.screen{position:relative;border-radius:26px;padding:22px;background:rgba(255,255,255,.42);
+  border:1px solid var(--line);box-shadow:0 34px 70px -46px rgba(52,36,60,.7);text-align:center}
+.screen img{width:min(100%,300px);height:auto;border-radius:16px;display:block;margin:0 auto}
+.screen .state{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:16px;font-size:11.5px;color:var(--faint)}
+.screen .state span{background:rgba(255,255,255,.5);border:1px solid var(--line);border-radius:999px;padding:5px 10px}
+.screen .state i{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:6px;vertical-align:1px;background:var(--ok)}
+
+section{padding:clamp(26px,4vw,46px) 0;border-top:1px solid rgba(255,255,255,.45)}
+.sec-head{display:flex;align-items:baseline;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:18px}
+h2{margin:0;font-size:clamp(20px,2.4vw,27px);font-weight:600;letter-spacing:-.01em}
+.sub{margin:4px 0 0;color:var(--soft);font-size:14.5px;max-width:70ch}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media (max-width:780px){.grid3{grid-template-columns:1fr}}
+.tile{padding:20px;border-radius:20px;background:var(--card);border:1px solid var(--line)}
+.tile .k{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--faint)}
+.tile b{display:block;margin:7px 0 6px;font-size:16.5px;font-weight:600}
+.tile p{margin:0;font-size:14px;color:var(--soft)}
+
+.steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;counter-reset:s}
+@media (max-width:780px){.steps{grid-template-columns:1fr}}
+.step{counter-increment:s;position:relative;padding:22px 20px 20px 22px;border-radius:20px;
+  background:rgba(255,255,255,.4);border:1px solid var(--line)}
+.step:before{content:"0" counter(s);display:block;font-variant-numeric:tabular-nums;font-size:12px;
+  letter-spacing:.18em;color:var(--faint);margin-bottom:8px}
+.step b{font-size:16px;display:block;margin-bottom:6px}
+.step p{margin:0;font-size:14px;color:var(--soft)}
+
+.targets{display:grid;gap:10px}
+.tcard{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px 18px;align-items:center;
+  padding:18px 20px;border-radius:18px;background:var(--card);border:1px solid var(--line)}
+@media (max-width:620px){.tcard{grid-template-columns:1fr}}
+.tcard .name{font-weight:600;font-size:16px}
+.tcard .meta{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12.5px;color:var(--soft);margin-top:4px}
+.tcard .flags{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.flag{font-size:11px;border-radius:999px;padding:3px 9px;border:1px solid var(--line);background:rgba(255,255,255,.45);color:var(--soft)}
+.flag.ok{color:var(--ok);border-color:rgba(47,125,91,.3);background:rgba(47,125,91,.08)}
+.flag.warn{color:var(--warn);border-color:rgba(163,80,95,.3);background:rgba(163,80,95,.08)}
+.tcard .go{justify-self:end;font-size:13.5px;font-weight:600;text-decoration:none;padding:10px 16px;border-radius:999px;
+  border:1px solid var(--line);background:rgba(255,255,255,.6);white-space:nowrap}
+.tcard .go:hover{background:#fff}
+.empty{padding:20px;border-radius:18px;border:1px dashed rgba(255,255,255,.85);color:var(--soft);font-size:14px}
+
+.warnbox{border-left:3px solid var(--warn);background:rgba(255,255,255,.5);border-radius:0 18px 18px 0;
+  padding:18px 22px;font-size:14px;color:var(--soft)}
+.warnbox b{color:var(--ink)}
+.warnbox ul{margin:8px 0 0;padding-left:18px}
+.warnbox li{margin:5px 0}
+.warnbox a{color:#7a3d4c}
+footer{display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;border-top:1px solid rgba(255,255,255,.45);
+  padding-top:22px;font-size:12px;color:var(--faint)}
+footer a{text-decoration:none;border-bottom:1px dotted rgba(55,42,64,.3)}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.92em;
+  background:rgba(255,255,255,.5);border:1px solid var(--line);border-radius:6px;padding:1px 5px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <a class="brand" href="/"><img src="assets/logo.png" alt=""><b>miragem</b></a>
+  <nav>
+    <a href="#como" data-i18n="nav_how">Como funciona</a>
+    <a href="#compat" data-i18n="nav_compat">Compatibilidade</a>
+    <a href="#aviso" data-i18n="nav_warn">Aviso</a>
+    <a href="/gerador" data-i18n="nav_usb">Pacote USB</a>
+    <a href="/installer" data-i18n="nav_install">Instalar</a>
+    <span class="langs" id="langs">
+      <button data-lang="pt">PT</button><button data-lang="en">EN</button><button data-lang="es">ES</button>
+    </span>
+  </nav>
+</header>
+
+<div class="hero">
+  <div>
+    <p class="eyebrow" data-i18n="eyebrow">TV digital · homebrew</p>
+    <h1><span data-i18n="h1a">Sua TV,</span><br><em data-i18n="h1b">outras possibilidades.</em></h1>
+    <p class="lede" data-i18n="lede">Root e gerenciador homebrew para TVs Roku com Ginga no Roku OS 15.0.4. O app entra pelo canal interativo do pendrive, abre o Chromium 104 como uid 500 e o GhostLock leva ao root — sem atualizar o firmware.</p>
+    <div class="cta">
+      <a class="btn" href="/installer" data-i18n="cta_install">Instalar na TV</a>
+      <a class="btn ghost" href="#como" data-i18n="cta_how">Ver como funciona</a>
+    </div>
+    <div class="chips">
+      <span class="chip"><b>Roku OS 15.0.4</b></span>
+      <span class="chip"><b>Ginga</b> · ISDB-Tb</span>
+      <span class="chip"><b>H536X</b> / Philco verificado</span>
+      <span class="chip" data-i18n="chip_others">outros modelos: portar o GhostLock</span>
+    </div>
+  </div>
+  <div class="screen">
+    <img src="assets/logo.png" alt="Miragem">
+    <div class="state">
+      <span><i></i><span data-i18n="st_root">root uid 0</span></span>
+      <span><span data-i18n="st_shell">shell 2222</span></span>
+      <span><span data-i18n="st_mgr">gerenciador 8090</span></span>
+    </div>
+  </div>
+</div>
+
+<section id="como">
+  <div class="sec-head">
+    <div>
+      <h2 data-i18n="how_title">Como funciona</h2>
+      <p class="sub" data-i18n="how_sub">Três estágios, todos no próprio aparelho. Nada de firmware modificado, nada de downgrade forçado.</p>
+    </div>
+  </div>
+  <div class="grid3">
+    <div class="tile"><div class="k">01 · <span data-i18n="how1_k">entrada</span></div><b data-i18n="how1_t">App Ginga no pendrive</b>
+      <p data-i18n="how1_p">A TV carrega o app HTML5 de <code>/ginga/installed/</code> na entrada Antena TV. É o entrypoint que existe nas TVs brasileiras com Ginga.</p></div>
+    <div class="tile"><div class="k">02 · <span data-i18n="how2_k">navegador</span></div><b data-i18n="how2_t">Chromium 104 → uid 500</b>
+      <p data-i18n="how2_p">O payload V8 (CVE-2023-3079) roda no navegador do app e entrega execução como user 500 — o mesmo em qualquer build 15.0.4.</p></div>
+    <div class="tile"><div class="k">03 · <span data-i18n="how3_k">kernel</span></div><b data-i18n="how3_t">GhostLock → root</b>
+      <p data-i18n="how3_p">A corrida de futex troca a credencial do processo e escapa do chroot. Os offsets são por kernel: o do H536X já está publicado.</p></div>
+  </div>
+</section>
+
+<section id="compat">
+  <div class="sec-head">
+    <div>
+      <h2 data-i18n="compat_title">Modelos e kernels</h2>
+      <p class="sub" data-i18n="compat_sub">O Miragem é o mesmo em qualquer Roku TV com Ginga no 15.0.4. O que muda de modelo para modelo é só o kernel do GhostLock.</p>
+    </div>
+    <a class="btn ghost" href="/installer?pick=1" data-i18n="compat_pick">Escolher no instalador</a>
+  </div>
+  <div class="targets" id="targets">
+    <div class="empty" data-i18n="compat_loading">Carregando o catálogo…</div>
+  </div>
+  <p class="sub" style="margin-top:14px" data-i18n="compat_foot">Seu modelo não está aqui? O instalador ainda chega ao user 500; o GhostLock precisa de um port (docs/PORTING.md).</p>
+</section>
+
+<section id="aviso">
+  <div class="sec-head"><h2 data-i18n="warn_title">Antes de instalar</h2></div>
+  <div class="warnbox">
+    <b data-i18n="warn_1_t">Só Roku OS 15.0.4.</b>
+    <span data-i18n="warn_1_p">Não aceite a atualização 16.0: ela remove a cadeia de certificados que o fluxo usa e o GhostLock deixa de valer. Se a TV já estiver na 16.0, pare aqui.</span>
+    <ul>
+      <li><b data-i18n="warn_2_t">Downgrade:</b> <span data-i18n="warn_2_p">o update oficial fica em</span> <a href="https://tvupdate.roku.com/" rel="noopener">tvupdate.roku.com</a>. <span data-i18n="warn_2_p2">Se ele ainda oferecer a 15.0.4 para o seu modelo/serial, instale essa imagem — existe a chance de continuar servida mesmo com a 16.0 no ar, mas não é garantido.</span></li>
+      <li><b data-i18n="warn_3_t">Backup:</b> <span data-i18n="warn_3_p">se você conseguir o <code>update.roku</code> da 15.0.4, espelhe no archive.org e avise numa issue do repositório. É o backup caso a Roku tire a imagem do ar.</span></li>
+      <li><b data-i18n="warn_4_t">Risco:</b> <span data-i18n="warn_4_p">é pesquisa em hardware próprio, sem garantia. Um port errado de kernel pode travar a TV; faça só na sua.</span></li>
+      <li><b data-i18n="warn_5_t">IP do PC:</b> <span data-i18n="warn_5_p">o instalador pede o IPv4 do PC porque o gx_bind.rld é compilado com esse endereço e conecta de volta nele (47190/47192) para buscar o agente root. PC e TV na mesma rede, e o start_servers.sh rodando.</span></li>
+    </ul>
+  </div>
+</section>
+
+<footer>
+  <span>miragem · <span data-i18n="foot_note">pesquisa no próprio aparelho</span> · MIT</span>
+  <span>
+    <a href="/installer" data-i18n="nav_install">Instalar</a> ·
+    <a href="/gerador" data-i18n="nav_usb">Pacote USB</a> ·
+    <a href="/kernels.json">kernels.json</a>
+    <span id="repo"></span>
+  </span>
+</footer>
+
+</div>
+
+<script>window.__TARGETS__=__TARGETS_JSON__;</script>
+<script>
+(function(){
+  "use strict";
+  var STR = {
+    pt:{nav_how:"Como funciona",nav_compat:"Compatibilidade",nav_warn:"Aviso",nav_usb:"Pacote USB",nav_install:"Instalar",
+      eyebrow:"TV digital · homebrew",h1a:"Sua TV,",h1b:"outras possibilidades.",
+      lede:"Root e gerenciador homebrew para TVs Roku com Ginga no Roku OS 15.0.4. O app entra pelo canal interativo do pendrive, abre o Chromium 104 como uid 500 e o GhostLock leva ao root — sem atualizar o firmware.",
+      cta_install:"Instalar na TV",cta_how:"Ver como funciona",chip_others:"outros modelos: portar o GhostLock",
+      st_root:"root uid 0",st_shell:"shell 2222",st_mgr:"gerenciador 8090",
+      how_title:"Como funciona",how_sub:"Três estágios, todos no próprio aparelho. Nada de firmware modificado, nada de downgrade forçado.",
+      how1_k:"entrada",how1_t:"App Ginga no pendrive",how1_p:"A TV carrega o app HTML5 de /ginga/installed/ na entrada Antena TV. É o entrypoint que existe nas TVs brasileiras com Ginga.",
+      how2_k:"navegador",how2_t:"Chromium 104 → uid 500",how2_p:"O payload V8 (CVE-2023-3079) roda no navegador do app e entrega execução como user 500 — o mesmo em qualquer build 15.0.4.",
+      how3_k:"kernel",how3_t:"GhostLock → root",how3_p:"A corrida de futex troca a credencial do processo e escapa do chroot. Os offsets são por kernel: o do H536X já está publicado.",
+      compat_title:"Modelos e kernels",compat_sub:"O Miragem é o mesmo em qualquer Roku TV com Ginga no 15.0.4. O que muda de modelo para modelo é só o kernel do GhostLock.",
+      compat_pick:"Escolher no instalador",compat_loading:"Carregando o catálogo…",
+      compat_foot:"Seu modelo não está aqui? O instalador ainda chega ao user 500; o GhostLock precisa de um port.",
+      warn_title:"Antes de instalar",warn_1_t:"Só Roku OS 15.0.4.",warn_1_p:" Não aceite a atualização 16.0: ela remove a cadeia de certificados que o fluxo usa e o GhostLock deixa de valer. Se a TV já estiver na 16.0, pare aqui.",
+      warn_2_t:"Downgrade:",warn_2_p:" o update oficial fica em",warn_2_p2:" Se ele ainda oferecer a 15.0.4 para o seu modelo/serial, instale essa imagem — existe a chance de continuar servida mesmo com a 16.0 no ar, mas não é garantido.",
+      warn_3_t:"Backup:",warn_3_p:" se você conseguir o update.roku da 15.0.4, espelhe no archive.org e avise numa issue do repositório. É o backup caso a Roku tire a imagem do ar.",
+      warn_4_t:"Risco:",warn_4_p:" é pesquisa em hardware próprio, sem garantia. Um port errado de kernel pode travar a TV; faça só na sua.",
+      warn_5_t:"IP do PC:",warn_5_p:" o instalador pede o IPv4 do PC porque o gx_bind.rld é compilado com esse endereço e conecta de volta nele (47190/47192) para buscar o agente root. PC e TV na mesma rede, com o start_servers.sh rodando.",
+      foot_note:"pesquisa no próprio aparelho",verified:"verificado",payload_yes:"payload publicado",payload_no:"só offsets",use:"usar este alvo",no_targets:"Nenhum kernel publicado ainda.",updated:"atualizado"},
+    en:{nav_how:"How it works",nav_compat:"Compatibility",nav_warn:"Notice",nav_usb:"USB package",nav_install:"Install",
+      eyebrow:"Digital TV · homebrew",h1a:"Your TV,",h1b:"other possibilities.",
+      lede:"Root and a homebrew manager for Roku TVs with Ginga on Roku OS 15.0.4. The app loads from the USB interactive channel, opens Chromium 104 as uid 500, and GhostLock gives you root — no firmware update.",
+      cta_install:"Install on the TV",cta_how:"See how it works",chip_others:"other models: port GhostLock",
+      st_root:"root uid 0",st_shell:"shell 2222",st_mgr:"manager 8090",
+      how_title:"How it works",how_sub:"Three stages, all on the device. No modified firmware, no forced downgrade.",
+      how1_k:"entry",how1_t:"Ginga app on a USB drive",how1_p:"The TV loads the HTML5 app from /ginga/installed/ on the Antenna TV input. That entrypoint exists on Brazilian TVs with Ginga.",
+      how2_k:"browser",how2_t:"Chromium 104 → uid 500",how2_p:"The V8 payload (CVE-2023-3079) runs in the app browser and gives execution as user 500 — the same on any 15.0.4 build.",
+      how3_k:"kernel",how3_t:"GhostLock → root",how3_p:"The futex race swaps the process credential and escapes the chroot. Offsets are per kernel: the H536X one is already published.",
+      compat_title:"Models and kernels",compat_sub:"Miragem is the same on any Ginga Roku TV on 15.0.4. Only the GhostLock kernel changes from model to model.",
+      compat_pick:"Pick in the installer",compat_loading:"Loading the catalog…",
+      compat_foot:"Not listed? The installer still reaches user 500; GhostLock needs a port.",
+      warn_title:"Before you install",warn_1_t:"Roku OS 15.0.4 only.",warn_1_p:" Do not take the 16.0 update: it removes the certificate chain this flow uses and GhostLock stops working. If the TV is already on 16.0, stop here.",
+      warn_2_t:"Downgrade:",warn_2_p:" the official update lives at",warn_2_p2:" If it still offers 15.0.4 for your model/serial, install that image — it may still be served even with 16.0 out, but it is not guaranteed.",
+      warn_3_t:"Backup:",warn_3_p:" if you get the 15.0.4 update.roku, mirror it on archive.org and say so in a repo issue. That is the backup if Roku pulls the image.",
+      warn_4_t:"Risk:",warn_4_p:" this is research on your own hardware, no warranty. A bad kernel port can brick the TV; only do it on yours.",
+      warn_5_t:"PC IP:",warn_5_p:" the installer asks for the PC IPv4 because gx_bind.rld is compiled with that address and connects back to it (47190/47192) to fetch the root agent. PC and TV on the same network, with start_servers.sh running.",
+      foot_note:"research on the device itself",verified:"verified",payload_yes:"payload published",payload_no:"offsets only",use:"use this target",no_targets:"No kernel published yet.",updated:"updated"},
+    es:{nav_how:"Cómo funciona",nav_compat:"Compatibilidad",nav_warn:"Aviso",nav_usb:"Paquete USB",nav_install:"Instalar",
+      eyebrow:"TV digital · homebrew",h1a:"Tu TV,",h1b:"otras posibilidades.",
+      lede:"Root y gestor homebrew para TVs Roku con Ginga en Roku OS 15.0.4. La app entra por el canal interactivo del pendrive, abre Chromium 104 como uid 500 y GhostLock llega al root — sin actualizar el firmware.",
+      cta_install:"Instalar en la TV",cta_how:"Ver cómo funciona",chip_others:"otros modelos: portar GhostLock",
+      st_root:"root uid 0",st_shell:"shell 2222",st_mgr:"gestor 8090",
+      how_title:"Cómo funciona",how_sub:"Tres etapas, todas en el propio aparato. Sin firmware modificado, sin downgrade forzado.",
+      how1_k:"entrada",how1_t:"App Ginga en el pendrive",how1_p:"La TV carga la app HTML5 de /ginga/installed/ en la entrada Antena TV. Es el entrypoint de las TVs brasileñas con Ginga.",
+      how2_k:"navegador",how2_t:"Chromium 104 → uid 500",how2_p:"El payload V8 (CVE-2023-3079) corre en el navegador de la app y entrega ejecución como user 500 — igual en cualquier build 15.0.4.",
+      how3_k:"kernel",how3_t:"GhostLock → root",how3_p:"La carrera de futex cambia la credencial del proceso y escapa del chroot. Los offsets son por kernel: el del H536X ya está publicado.",
+      compat_title:"Modelos y kernels",compat_sub:"Miragem es igual en cualquier Roku TV con Ginga en 15.0.4. Solo cambia el kernel del GhostLock.",
+      compat_pick:"Elegir en el instalador",compat_loading:"Cargando el catálogo…",
+      compat_foot:"¿Tu modelo no está? El instalador llega a user 500; GhostLock necesita un port.",
+      warn_title:"Antes de instalar",warn_1_t:"Solo Roku OS 15.0.4.",warn_1_p:" No aceptes la actualización 16.0: quita la cadena de certificados que usa el flujo y GhostLock deja de valer. Si la TV ya está en 16.0, para aquí.",
+      warn_2_t:"Downgrade:",warn_2_p:" el update oficial está en",warn_2_p2:" Si todavía ofrece 15.0.4 para tu modelo/serial, instala esa imagen — puede seguir servida aunque exista 16.0, pero no está garantizado.",
+      warn_3_t:"Backup:",warn_3_p:" si consigues el update.roku de 15.0.4, espéjalo en archive.org y avisa en un issue del repositorio. Es el respaldo si Roku retira la imagen.",
+      warn_4_t:"Riesgo:",warn_4_p:" es investigación en tu propio hardware, sin garantía. Un port malo del kernel puede bloquear la TV; hazlo solo en la tuya.",
+      warn_5_t:"IP del PC:",warn_5_p:" el instalador pide la IPv4 del PC porque gx_bind.rld se compila con esa dirección y conecta de vuelta (47190/47192) para buscar el agente root. PC y TV en la misma red, con start_servers.sh corriendo.",
+      foot_note:"investigación en el propio aparato",verified:"verificado",payload_yes:"payload publicado",payload_no:"solo offsets",use:"usar este target",no_targets:"Aún no hay kernels publicados.",updated:"actualizado"}
+  };
+
+  var lang = '';
+  try{ lang = localStorage.getItem('miragem.lang') || ''; }catch(e){}
+  if (!STR[lang]) lang = /^en/i.test(navigator.language||'') ? 'en' : (/^es/i.test(navigator.language||'') ? 'es' : 'pt');
+
+  function T(k){ return (STR[lang] && STR[lang][k]) || STR.pt[k] || k; }
+  function apply(){
+    document.documentElement.lang = lang === 'pt' ? 'pt-BR' : lang;
+    Array.prototype.forEach.call(document.querySelectorAll('[data-i18n]'), function(el){
+      var k = el.getAttribute('data-i18n');
+      if (STR.pt[k] !== undefined) el.textContent = T(k);
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('#langs button'), function(b){
+      b.className = b.getAttribute('data-lang') === lang ? 'on' : '';
+    });
+    renderTargets(window.__TARGETS__);
+  }
+  Array.prototype.forEach.call(document.querySelectorAll('#langs button'), function(b){
+    b.addEventListener('click', function(){ lang = b.getAttribute('data-lang'); try{ localStorage.setItem('miragem.lang', lang); }catch(e){} apply(); });
+  });
+  function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]; }); }
+
+  function renderTargets(cat){
+    var box = document.getElementById('targets');
+    if (!box) return;
+    var list = cat && cat.targets;
+    if (!list || !list.length){ box.innerHTML = '<div class="empty">' + esc(T('no_targets')) + '</div>'; return; }
+    box.innerHTML = list.map(function(t){
+      var flags = ['<span class="flag ok">' + esc(T('verified')) + '</span>'];
+      var pay = t.payload && t.payload.available;
+      flags.push('<span class="flag ' + (pay ? 'ok' : 'warn') + '">' + esc(pay ? T('payload_yes') + ' · ' + t.payload.files.length : T('payload_no')) + '</span>');
+      return '<div class="tcard"><div>' +
+        '<div class="name">' + esc(t.model || t.id) + '</div>' +
+        '<div class="meta">Roku OS ' + esc(t.os || '?') + ' · Linux ' + esc(t.kernel || '?') + ' · ' + esc(t.arch || '?') + (t.kimage ? ' · ' + esc(t.kimage) : '') + '</div>' +
+        '<div class="flags">' + flags.join('') + '</div></div>' +
+        '<a class="go" href="/installer?target=' + encodeURIComponent(t.id) + '">' + esc(T('use')) + '</a></div>';
+    }).join('');
+  }
+
+  var repo = "__REPO__";
+  if (repo) {
+    var r = document.getElementById('repo');
+    if (r) r.innerHTML = ' · <a href="' + esc(repo) + '" rel="noopener">GitHub</a>';
+  }
+
+  if (window.__TARGETS__ && window.__TARGETS__.targets) renderTargets(window.__TARGETS__);
+  apply();
+
+  fetch('/api/targets', {cache:'no-store'}).then(function(r){ return r.ok ? r.json() : null; })
+    .then(function(j){ if (j && j.targets) { window.__TARGETS__ = j; renderTargets(j); } })
+    .catch(function(){});
+})();
+</script>
+</body>
+</html>

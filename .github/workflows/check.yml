@@ -1,0 +1,41 @@
+name: check
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Gerador USB em dia
+        run: node tools/build_site.mjs --check
+
+      - name: Build do site
+        run: node tools/build.mjs
+
+      - name: Conferencias (scripts, tags, i18n, links)
+        run: node tools/check_site.mjs
+
+      - name: Fluxo do instalador (linkedom)
+        run: |
+          npm install --no-save --no-audit --no-fund linkedom
+          node tools/test_installer.mjs dist/installer.html
+
+      - name: JSON do catalogo
+        run: |
+          node - <<'JS'
+          const k = require('./kernels.json');
+          if (!k.targets || !k.targets.length) process.exit(1);
+          for (const t of k.targets) {
+            for (const f of ['id', 'model', 'os', 'kernel', 'arch', 'offsets']) {
+              if (!t[f]) { console.error(t.id + ': falta ' + f); process.exit(1); }
+            }
+          }
+          console.log('kernels.json ok: ' + k.targets.length + ' alvo(s)');
+          JS
