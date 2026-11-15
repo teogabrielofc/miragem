@@ -21,9 +21,8 @@ body{margin:0;color:var(--ink);font-family:system-ui,-apple-system,'Segoe UI',Ro
 a{color:inherit}
 .wrap{max-width:1080px;margin:0 auto;padding:clamp(18px,3vw,34px) clamp(18px,4vw,40px) 60px}
 header{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap}
-.brand{display:flex;align-items:center;gap:12px;text-decoration:none}
-.brand img{width:44px;height:auto;border-radius:11px;box-shadow:0 10px 24px -14px rgba(60,40,70,.6)}
-.brand b{font-family:'Parisienne',cursive;font-weight:400;font-size:34px;line-height:1;color:var(--brand)}
+.brand{display:flex;align-items:center;text-decoration:none}
+.brand b{font-family:'Parisienne',cursive;font-weight:400;font-size:36px;line-height:1;color:var(--brand)}
 nav{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:13px}
 nav a{padding:7px 12px;border-radius:999px;text-decoration:none;color:var(--soft);border:1px solid transparent}
 nav a:hover,nav a:focus-visible{background:rgba(255,255,255,.45);border-color:var(--line);color:var(--ink);outline:none}
@@ -52,7 +51,7 @@ h1 em{font-style:normal;color:var(--brand)}
 
 .screen{position:relative;border-radius:26px;padding:22px;background:rgba(255,255,255,.42);
   border:1px solid var(--line);box-shadow:0 34px 70px -46px rgba(52,36,60,.7);text-align:center}
-.screen img{width:min(100%,300px);height:auto;border-radius:16px;display:block;margin:0 auto}
+.screen-logo{font-family:'Parisienne',cursive;font-size:clamp(56px,8vw,88px);line-height:1;color:var(--brand);text-align:center;text-shadow:0 10px 24px rgba(60,40,70,.22)}
 .screen .state{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:16px;font-size:11.5px;color:var(--faint)}
 .screen .state span{background:rgba(255,255,255,.5);border:1px solid var(--line);border-radius:999px;padding:5px 10px}
 .screen .state i{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:6px;vertical-align:1px;background:var(--ok)}
@@ -109,13 +108,13 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:
 <div class="wrap">
 
 <header>
-  <a class="brand" href="/"><img src="assets/logo.png" alt=""><b>miragem</b></a>
+  <a class="brand" href="/" aria-label="Miragem"><b>miragem</b></a>
   <nav>
     <a href="#como" data-i18n="nav_how">Como funciona</a>
     <a href="#compat" data-i18n="nav_compat">Compatibilidade</a>
     <a href="#aviso" data-i18n="nav_warn">Aviso</a>
     <a href="/gerador" data-i18n="nav_usb">Pacote USB</a>
-    <a href="/installer" data-i18n="nav_install">Instalar</a>
+    <a href="/gerador" data-i18n="nav_install">Instalar</a>
     <span class="langs" id="langs">
       <button data-lang="pt">PT</button><button data-lang="en">EN</button><button data-lang="es">ES</button>
     </span>
@@ -128,7 +127,7 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:
     <h1><span data-i18n="h1a">Sua TV,</span><br><em data-i18n="h1b">outras possibilidades.</em></h1>
     <p class="lede" data-i18n="lede">Root e gerenciador homebrew para TVs Roku com Ginga no Roku OS 15.0.4. O app entra pelo canal interativo do pendrive, abre o Chromium 104 como uid 500 e o GhostLock leva ao root — sem atualizar o firmware.</p>
     <div class="cta">
-      <a class="btn" href="/installer" data-i18n="cta_install">Instalar na TV</a>
+      <a class="btn" href="/gerador" data-i18n="cta_install">Instalar na TV</a>
       <a class="btn ghost" href="#como" data-i18n="cta_how">Ver como funciona</a>
     </div>
     <div class="chips">
@@ -139,7 +138,7 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:
     </div>
   </div>
   <div class="screen">
-    <img src="assets/logo.png" alt="Miragem">
+    <div class="screen-logo" aria-label="Miragem">miragem</div>
     <div class="state">
       <span><i></i><span data-i18n="st_root">root uid 0</span></span>
       <span><span data-i18n="st_shell">shell 2222</span></span>
@@ -196,7 +195,7 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:
 <footer>
   <span>miragem · <span data-i18n="foot_note">pesquisa no próprio aparelho</span> · MIT</span>
   <span>
-    <a href="/installer" data-i18n="nav_install">Instalar</a> ·
+    <a href="/gerador" data-i18n="nav_install">Instalar</a> ·
     <a href="/gerador" data-i18n="nav_usb">Pacote USB</a> ·
     <a href="/kernels.json">kernels.json</a>
     <span id="repo"></span>
@@ -227,7 +226,7 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:
       warn_3_t:"Backup:",warn_3_p:" se você conseguir o update.roku da 15.0.4, espelhe no archive.org e avise numa issue do repositório. É o backup caso a Roku tire a imagem do ar.",
       warn_4_t:"Risco:",warn_4_p:" é pesquisa em hardware próprio, sem garantia. Um port errado de kernel pode travar a TV; faça só na sua.",
       warn_5_t:"IP do PC:",warn_5_p:" o instalador pede o IPv4 do PC porque o gx_bind.rld é compilado com esse endereço e conecta de volta nele (47190/47192) para buscar o agente root. PC e TV na mesma rede, com o start_servers.sh rodando.",
-      foot_note:"pesquisa no próprio aparelho",verified:"verificado",payload_yes:"payload publicado",payload_no:"só offsets",use:"usar este alvo",no_targets:"Nenhum kernel publicado ainda.",updated:"atualizado"},
+      foot_note:"pesquisa no próprio aparelho",verified:"verificado",payload_yes:"payload publicado",payload_no:"só offsets",no_targets:"Nenhum kernel publicado ainda.",updated:"atualizado"},
     en:{nav_how:"How it works",nav_compat:"Compatibility",nav_warn:"Notice",nav_usb:"USB package",nav_install:"Install",
       eyebrow:"Digital TV · homebrew",h1a:"Your TV,",h1b:"other possibilities.",
       lede:"Root and a homebrew manager for Roku TVs with Ginga on Roku OS 15.0.4. The app loads from the USB interactive channel, opens Chromium 104 as uid 500, and GhostLock gives you root — no firmware update.",
@@ -245,7 +244,7 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:
       warn_3_t:"Backup:",warn_3_p:" if you get the 15.0.4 update.roku, mirror it on archive.org and say so in a repo issue. That is the backup if Roku pulls the image.",
       warn_4_t:"Risk:",warn_4_p:" this is research on your own hardware, no warranty. A bad kernel port can brick the TV; only do it on yours.",
       warn_5_t:"PC IP:",warn_5_p:" the installer asks for the PC IPv4 because gx_bind.rld is compiled with that address and connects back to it (47190/47192) to fetch the root agent. PC and TV on the same network, with start_servers.sh running.",
-      foot_note:"research on the device itself",verified:"verified",payload_yes:"payload published",payload_no:"offsets only",use:"use this target",no_targets:"No kernel published yet.",updated:"updated"},
+      foot_note:"research on the device itself",verified:"verified",payload_yes:"payload published",payload_no:"offsets only",no_targets:"No kernel published yet.",updated:"updated"},
     es:{nav_how:"Cómo funciona",nav_compat:"Compatibilidad",nav_warn:"Aviso",nav_usb:"Paquete USB",nav_install:"Instalar",
       eyebrow:"TV digital · homebrew",h1a:"Tu TV,",h1b:"otras posibilidades.",
       lede:"Root y gestor homebrew para TVs Roku con Ginga en Roku OS 15.0.4. La app entra por el canal interactivo del pendrive, abre Chromium 104 como uid 500 y GhostLock llega al root — sin actualizar el firmware.",
@@ -263,7 +262,7 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:
       warn_3_t:"Backup:",warn_3_p:" si consigues el update.roku de 15.0.4, espéjalo en archive.org y avisa en un issue del repositorio. Es el respaldo si Roku retira la imagen.",
       warn_4_t:"Riesgo:",warn_4_p:" es investigación en tu propio hardware, sin garantía. Un port malo del kernel puede bloquear la TV; hazlo solo en la tuya.",
       warn_5_t:"IP del PC:",warn_5_p:" el instalador pide la IPv4 del PC porque gx_bind.rld se compila con esa dirección y conecta de vuelta (47190/47192) para buscar el agente root. PC y TV en la misma red, con start_servers.sh corriendo.",
-      foot_note:"investigación en el propio aparato",verified:"verificado",payload_yes:"payload publicado",payload_no:"solo offsets",use:"usar este target",no_targets:"Aún no hay kernels publicados.",updated:"actualizado"}
+      foot_note:"investigación en el propio aparato",verified:"verificado",payload_yes:"payload publicado",payload_no:"solo offsets",no_targets:"Aún no hay kernels publicados.",updated:"actualizado"}
   };
 
   var lang = '';
@@ -299,8 +298,7 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:
       return '<div class="tcard"><div>' +
         '<div class="name">' + esc(t.model || t.id) + '</div>' +
         '<div class="meta">Roku OS ' + esc(t.os || '?') + ' · Linux ' + esc(t.kernel || '?') + ' · ' + esc(t.arch || '?') + (t.kimage ? ' · ' + esc(t.kimage) : '') + '</div>' +
-        '<div class="flags">' + flags.join('') + '</div></div>' +
-        '<a class="go" href="/installer?target=' + encodeURIComponent(t.id) + '">' + esc(T('use')) + '</a></div>';
+        '<div class="flags">' + flags.join('') + '</div></div></div>';
     }).join('');
   }
 
