@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 import socket,sys,time,os
+HOST=os.environ.get('ROKU_HOST','192.168.1.100')
+PORT=int(os.environ.get('ROKU_PORT','2323'))
 path=sys.argv[1]; fn=sys.argv[2]
 data=open(fn,'rb').read()
-s=socket.create_connection(('192.168.1.100',2323),timeout=6); s.settimeout(2)
+s=socket.create_connection((HOST,PORT),timeout=6); s.settimeout(2)
 time.sleep(0.4)
 try: print('banner',repr(s.recv(200)))
 except Exception: pass

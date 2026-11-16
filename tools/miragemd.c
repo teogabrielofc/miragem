@@ -243,6 +243,31 @@ static const char *SR_FLAGS[] = {
 };
 static const char *SR_OPT[] = { "chroot_deny_fchdir", "chroot_deny_pivot", NULL };
 
+static int copy_file(const char *src, const char *dst, int mode){
+    int in = open(src, O_RDONLY);
+    if(in < 0) return -1;
+    int out = open(dst, O_WRONLY|O_CREAT|O_TRUNC, mode);
+    if(out < 0){ close(in); return -1; }
+    char b[8192]; ssize_t n; int rc = 0;
+    while((n = read(in, b, sizeof b)) > 0){
+        if(write(out, b, (size_t)n) != n){ rc = -1; break; }
+    }
+    close(in); close(out);
+    chmod(dst, (mode_t)mode);
+    return rc;
+}
+
+/* /tmp e' volatil: se o srpatch sumiu no reboot, restaura de /nvram ou
+ * de /tmp/miragem (o instalador deixa uma copia em /nvram). */
+static int ensure_srpatch(void){
+    const char *src[] = { "/nvram/miragem/srpatch", "/tmp/miragem/srpatch", NULL };
+    int i;
+    if(access(SRPATCH, X_OK) == 0) return 0;
+    for(i = 0; src[i]; i++)
+        if(access(src[i], R_OK) == 0 && copy_file(src[i], SRPATCH, 0755) == 0) return 0;
+    return -1;
+}
+
 static void send_json(int c, const char *body){
     int n = (int)strlen(body);
     char hdr[256];
@@ -458,6 +483,7 @@ static void handle(int c){
         if(!strcmp(a, "plugins")) { api_plugins(c); close(c); return; }
         if(!strcmp(a, "info"))    { api_status(c); close(c); return; }
         if(!strcmp(a, "superroot")) { api_superroot(c); close(c); return; }
+        if(!strcmp(a, "superroot/install")) { (void)ensure_srpatch(); api_superroot(c); close(c); return; }
         if(!strncmp(a, "superroot/", 10)) {
             char sub[64] = "", addr[16] = "0x8091e574";
             const char *p = a + 10, *last = strrchr(p, '/');
@@ -523,6 +549,7 @@ int main(int argc, char **argv){
     if(bind(s,(struct sockaddr*)&a,sizeof a) < 0){ perror("bind"); return 1; }
     if(listen(s, 16) < 0){ perror("listen"); return 1; }
 
+    (void)ensure_srpatch();
     fprintf(stderr, "miragemd: http://%s:%d/ (dir %s)\n", g_bind, g_port, g_dir);
     for(;;){
         int c = accept(s, 0, 0);

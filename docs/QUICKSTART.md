@@ -149,7 +149,15 @@ curl -s http://192.168.1.100:8060/query/device-info | grep software-version
 ```
 
 Gerenciador: na TV, abra `/manager` (ou `127.0.0.1:8090`); no PC, use o
-`tvsh`/`tvcmd.py` para o que precisar.
+`tvsh`/`tvcmd.py` para o que precisar. Para instalar/atualizar o gerenciador e
+o **srpatch** (superroot) de uma vez:
+
+```sh
+ROKU_HOST=192.168.1.100 bash tools/install_manager.sh
+```
+
+Ele deixa o srpatch em `/nvram/miragem/srpatch` (persistente); o gerenciador
+restaura `/tmp/srpatch` no boot e o botão Superroot (Ajustes) fica disponível.
 
 ## 6. Depois de reiniciar a TV
 

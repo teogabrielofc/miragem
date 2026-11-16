@@ -157,6 +157,7 @@ payload/   <target-id>/ com binários publicados (opcional; veja o README)
 assets/    logo.png · banner.png (wordmark do Miragem)
 tools/     tvsh · tvcmd/tvget/tvput · auto_root · srvrld_multi · start_servers
            build.mjs (site) · dev_server.mjs · check_site.mjs · test_installer.mjs
+           install_manager.sh (miragemd + srpatch na TV, persiste em /nvram)
            miragemd.c (servidor local) · miragemd.arm (binário ARM)
 exploit/   gx.c · gx_bind.c · rootagent.c · rootboot.c · mtdtool.c · pack.py
            srpatch.c (superroot: desliga as travas do grsecurity, por boot)

@@ -150,9 +150,20 @@ atualizado. O app só habilita o modo rápido se o alvo declarar
 `superroot.grsec_lock`); sem isso, ele oferece só “por corridas”. O app tem a seção **Superroot** em *Ajustes* (`app/manager.html`,
 PT/EN/ES) com os três botões e o aviso de reboot.
 
-Pré-requisito: `/tmp/srpatch` executável na TV (66 KB; o instalador pode
-entregá-lo junto com o resto — ele vive em `/tmp` e some no reboot). Sem ele a
-API responde `binary:false` e o app mostra “srpatch ausente”.
+Pré-requisito: `srpatch` na TV. O script **`tools/install_manager.sh`** faz
+tudo depois do root:
+
+```sh
+ROKU_HOST=<ip-da-tv> bash tools/install_manager.sh
+```
+
+Ele envia `tools/miragemd.arm` + `payload/<alvo>/srpatch`, instala em
+`/tmp/miragem/`, **persiste o srpatch em `/nvram/miragem/srpatch`** (sobrevive
+ao reboot) e reinicia o gerenciador. O `miragemd` no start (e
+`POST /api/superroot/install`) restaura `/tmp/srpatch` a partir do `/nvram` —
+então depois de um reboot o botão continua funcionando sem reenvio.
+
+Sem o binário, a API responde `binary:false` e o app mostra “srpatch ausente”.
 
 ## 6.1 Persistir o estado (importante)
 

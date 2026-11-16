@@ -7,7 +7,8 @@ na lista de alvos ("payload pronto" vs "só offsets").
 ```
 payload/
 └─ h536x-15.0.4.5537/
-   └─ gx_bind.rld     GhostLock + bindsh 2222 (compilado de exploit/gx_bind.c)
+   ├─ gx_bind.rld     GhostLock + bindsh 2222 (compilado de exploit/gx_bind.c)
+   └─ srpatch         superroot: flags do grsec (compilado de exploit/srpatch.c)
 ```
 
 ## O IP do PC
