@@ -77,6 +77,42 @@ do espaço do kernel (`0x80000000`+); os demais são offsets de campo.
 | `task_size` | `TASK_SIZE` | validação de ponteiros |
 | `thread_size` | `THREAD_SIZE` | validação de stack |
 
+### 1.2 `superroot`
+
+Opcional. Descreve como desligar as travas do **grsecurity** (superroot) nessa
+build; sem esse bloco o root funciona e o superroot não. Os offsets são
+**relativos a `grsec_block`** (o bloco de flags escrito no boot por
+`grsecurity_init`).
+
+```json
+"superroot": {
+  "method": "ghostlock-u32-write",
+  "grsec_block": "0x8091e518",
+  "grsec_lock": "0x8091e574",
+  "apply": ["chroot_caps", "chroot_deny_mount", "chroot_deny_sysctl", "..."],
+  "flags": { "chroot_findtask": "0x18", "chroot_deny_mount": "0x20", "...": "..." },
+  "left_enabled": ["chroot_deny_fchdir", "chroot_deny_pivot", "tpe", "grsec_lock"],
+  "verified": ["mount", "proc", "dmesg", "chmod", "mknod", "chroot", "unix", "shmat"],
+  "note": "escrever 0 (u32) em grsec_block+offset, uma variavel por corrida"
+}
+```
+
+| Campo | Uso |
+|---|---|
+| `method` | como aplicar (`ghostlock-u32-write`) |
+| `grsec_block` | base do bloco de flags (`.data`) |
+| `grsec_lock` | endereço de `grsec_lock` (fica ligado; bloqueia sysctl) |
+| `apply` | lista de flags desligadas pelo `srpatch` |
+| `flags` | nome → offset relativo à base |
+| `left_enabled` | o que fica ligado de propósito |
+| `verified` | o que já foi medido funcionando |
+
+Regras de teste (aprendidas na prática): **uma flag por corrida**, escrever
+**0**, validar pelo **sysctl** e pelo efeito (`mount`, `dmesg`, `/proc`) — não
+use a leitura pela primitiva, porque ela escreve **duas** palavras
+(`*(alvo)=valor` e `*(valor)=alvo-4`) e corrompe o vizinho. Veja
+[`SUPERROOT.md`](SUPERROOT.md).
+
 ## 2. Estado atual (honesto)
 
 - `kernels.json` é a **fonte de verdade** para novas builds.

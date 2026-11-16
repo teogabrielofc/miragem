@@ -97,6 +97,7 @@ entrypoint** (trabalho futuro), não só offsets novos: veja
 | Item | Estado |
 |---|---|
 | Root (uid=0) na TV | **Funciona** — GhostLock em `rt_mutex`, kernel 4.9.118 |
+| Superroot (grsec off) | **Funciona por boot** — `/proc` completo, `mount`, `dmesg`, `chmod +s`, `mknod` (12 flags; `docs/SUPERROOT.md`) |
 | Shell root | **Funciona** — PTY em TCP 2222, cliente `tools/tvsh` |
 | Instalador USB (app Ginga) | **Funciona** com o PC na mesma rede rodando os servidores |
 | Gerenciador (8090) | **Funciona** — status, tvsh on/off, plugins, flags de dev mode |
@@ -158,13 +159,14 @@ tools/     tvsh · tvcmd/tvget/tvput · auto_root · srvrld_multi · start_serve
            build.mjs (site) · dev_server.mjs · check_site.mjs · test_installer.mjs
            miragemd.c (servidor local) · miragemd.arm (binário ARM)
 exploit/   gx.c · gx_bind.c · rootagent.c · rootboot.c · mtdtool.c · pack.py
+           srpatch.c (superroot: desliga as travas do grsecurity, por boot)
 foothold/  página Ginga, addons mitmproxy, base do exploit V8, README
 windows/   roku_root.bat (lançador Windows: mitmweb + servidores + tvsh)
 vercel.json  build + output + rotas + headers do projeto na Vercel
-docs/      QUICKSTART.md · INSTALL.md · SITE.md · PUBLISH.md · RE.md · PORTING.md · KERNELS.md · LEGAL.md
+docs/      QUICKSTART.md · INSTALL.md · SITE.md · RE.md · PORTING.md · KERNELS.md
+           SUPERROOT.md · LEGAL.md
 kernels.json  tabela de kernels/offsets suportados (fonte de verdade)
-CONTRIBUTING.md  regras para PR (kernel, payload, docs) · docs/PUBLISH.md deploy
-AGENTE-PUBLICAR.md  roteiro para um agente no PC publicar no GitHub/Vercel
+CONTRIBUTING.md  regras para PR (kernel, payload, docs)
 ```
 
 ## Guia rápido (do zero ao root)
@@ -218,7 +220,7 @@ Linux, IP da TV, IP do Windows) e dê duplo clique. No navegador, abra
 
 Passo a passo completo: **`docs/QUICKSTART.md`** (quem puxa o quê, portas e
 problemas comuns) e **`docs/INSTALL.md`**. Gerador e deploy:
-**`docs/SITE.md`**; publicar (GitHub/Vercel): **`docs/PUBLISH.md`**. Achados de engenharia reversa e limites:
+**`docs/SITE.md`**. Superroot: **`docs/SUPERROOT.md`**. Achados de engenharia reversa e limites:
 **`docs/RE.md`**. Portar para outro kernel: **`docs/PORTING.md`** e
 **`docs/KERNELS.md`**.
 

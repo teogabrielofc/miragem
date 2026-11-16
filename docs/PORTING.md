@@ -45,6 +45,28 @@ kernel, mudou o layout: os offsets antigos escrevem em memória arbitrária e
 podem dar **panic** ou corromper a TV. A tabela completa está em
 `exploit/README.md` e em `kernels.json` (entrada `h536x-15.0.4.5537`).
 
+## 1.1 Portar é **duas** coisas: root e superroot
+
+O mesmo GhostLock serve para o root e para o **superroot** (desligar as travas
+do grsecurity: `mount`, `/proc` completo, `dmesg`, `chmod +s`, `mknod`…). Se o
+kernel é novo, você precisa dos dois conjuntos de endereços:
+
+| Conjunto | O que é | Onde vai |
+|---|---|---|
+| **root** | `init_cred`, `tcp_wmem`, `runqueues`, offsets de `task_struct`/`cred`/`fs` | `kernels.json` → `offsets` |
+| **superroot** | bloco de flags do grsecurity (`chroot_findtask`, `chroot_deny_mount`, `chroot_caps`, …) | `kernels.json` → `superroot` |
+
+Sem o bloco do grsec o root funciona, mas o superroot não. Um endereço errado
+pode derrubar a TV (a corrida já é instável por si) — por isso o guia pede os
+dois e a validação é passo a passo. Detalhes e a lista do H536X:
+[`SUPERROOT.md`](SUPERROOT.md).
+
+Como achar o bloco no kernel novo: localize a `ctl_table` do grsecurity
+(entradas de `0x24`, nomes `chroot_*`, handler `proc_dointvec_secure`),
+confirme com as stores de `grsecurity_init` no boot e com os xrefs
+(`gr_handle_chroot_mount`, `chroot_caps`/`GR_CHROOT_CAPS`,
+`gr_handle_chroot_sysctl`). Anote base + offset de cada flag.
+
 ## 2. Obtenha o kernel da sua TV
 
 1. Peça o update da **sua própria TV** em <https://tvupdate.roku.com/> (o site
@@ -121,9 +143,18 @@ TAREFAS
    c) escape: `run /tmp/gx_new.rld esc`, confira o root real e o agente.
    Observe a sessão root já aberta (tvsh). NÃO reinicie a TV para testar: cada
    dança deixa futex presos e o reboot perde o root.
-7. Entregue patch + evidência:
+7. Porte o **superroot** também (mesmo GhostLock, outra tabela). Localize a
+   ctl_table do grsecurity (entradas de 0x24, nomes chroot_*, handler
+   proc_dointvec_secure), confirme com as stores de grsecurity_init no boot e
+   com os xrefs gr_handle_chroot_mount / gr_handle_chroot_sysctl /
+   chroot_caps (GR_CHROOT_CAPS). Anote base + offset de cada flag
+   (chroot_findtask, chroot_deny_mount, chroot_caps, chroot_deny_chmod,
+   chroot_deny_mknod, chroot_deny_unix, chroot_deny_shmat, ...) e teste uma
+   por vez com exploit/srpatch.c. Veja docs/SUPERROOT.md.
+8. Entregue patch + evidência:
    - versão/build do kernel e como você a obteve;
-   - tabela de offsets preenchida no formato de kernels.json, com o método;
+   - tabela de offsets preenchida no formato de kernels.json, com o método,
+     incluindo o bloco `superroot` (base do grsec + offset de cada flag);
    - log de teste (comandos + saída de read/root/esc, sem dados sensíveis);
    - diff de exploit/gx.c, exploit/gx_bind.c e uma entrada nova em
      kernels.json;
@@ -131,7 +162,8 @@ TAREFAS
 
 SAÍDAS OBRIGATÓRIAS (não pule)
 - Kernel: versão, build, arquitetura, KASLR (sim/não) e origem (update.roku).
-- Offsets: tabela completa; cada valor com evidência (símbolo/assinatura).
+- Offsets: tabela completa (root) e bloco `superroot`; cada valor com
+  evidência (símbolo/assinatura/xref).
 - Teste: log de leitura e de root/escape; diga também o que NÃO funcionou.
 - Riscos: o que pode dar panic e o que fica corrompido até o reboot.
 
@@ -154,6 +186,8 @@ Antes de aceitar o port, confira:
    vmlinux). Sem isso a tabela não é verificável.
 2. **Offsets** — a tabela completa (`exploit/README.md`), cada linha com o
    método (DWARF, assinatura, leitura validada). Nada de "chute".
+   **Superroot**: a base do bloco grsec e o offset de cada flag, com o
+   `grsecurity_init`/ctl_table como evidência.
 3. **Log de teste** — `read` com 4+4 coerente, `uid=0`, `pwd=/` e `ls /` depois
    do escape. O log não pode ter serial/MAC/IP público desnecessário.
 4. **Patch** — offsets centralizados, `gx.c`/`gx_bind.c` compilando estático,
