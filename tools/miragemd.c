@@ -371,8 +371,8 @@ static void api_superroot_action(int c, const char *sub, const char *lockaddr){
         }
         for(i = 0; SR_OPT[i]; i++) (void)sr_set(SR_OPT[i], 1);
         (void)sr_set("chroot_deny_sysctl", 1);
-        (void)sr_set("chroot_caps", 1);
         (void)sr_set("grsec_lock", 1);
+        (void)sr_set("chroot_caps", 1);   /* caps por ultimo: bloqueia os echos seguintes */
     } else {
         char st[512], body[768];
         sr_status_fields(st, sizeof st);
