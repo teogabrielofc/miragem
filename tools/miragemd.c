@@ -307,7 +307,7 @@ static int sr_ensure(const char *name, int tries){
     return sr_get(name, v, sizeof v) == 0 && !strcmp(v, "0");
 }
 
-static void api_superroot_action(int c, const char *sub){
+static void api_superroot_action(int c, const char *sub, const char *lockaddr){
     int ok = 1, i;
     char log[1024];
     log[0] = 0;
@@ -327,7 +327,9 @@ static void api_superroot_action(int c, const char *sub){
         char v[32];
         /* 1) lock (1 corrida) */
         if(sr_get("grsec_lock", v, sizeof v) != 0 || strcmp(v, "0")){
-            if(run(SRPATCH " w 0x8091e574 0") != 0 && run(SRPATCH " w 0x8091e574 0") != 0)
+            char lc[128];
+            snprintf(lc, sizeof lc, SRPATCH " w %s 0", lockaddr);
+            if(run(lc) != 0 && run(lc) != 0)
                 { ok = 0; strncat(log, "lock falhou; ", sizeof log - strlen(log) - 1); }
         }
         /* 2) caps e gate de sysctl sao pre-requisito para o echo (1 corrida cada) */
@@ -456,7 +458,25 @@ static void handle(int c){
         if(!strcmp(a, "plugins")) { api_plugins(c); close(c); return; }
         if(!strcmp(a, "info"))    { api_status(c); close(c); return; }
         if(!strcmp(a, "superroot")) { api_superroot(c); close(c); return; }
-        if(!strncmp(a, "superroot/", 10)) { api_superroot_action(c, a + 10); close(c); return; }
+        if(!strncmp(a, "superroot/", 10)) {
+            char sub[64] = "", addr[16] = "0x8091e574";
+            const char *p = a + 10, *last = strrchr(p, '/');
+            const char *x = NULL;
+            if(last && last[1] == '0' && (last[2] == 'x' || last[2] == 'X')) x = last + 1;
+            size_t n = x ? (size_t)(last - p) : strlen(p);
+            if(n >= sizeof sub) n = sizeof sub - 1;
+            memcpy(sub, p, n); sub[n] = 0;
+            if(x){
+                size_t m = strlen(x);
+                int valid = (m > 2 && m < sizeof addr);
+                size_t k;
+                for(k = 2; valid && k < m; k++)
+                    if(!strchr("0123456789abcdefABCDEF", x[k])) valid = 0;
+                if(valid) snprintf(addr, sizeof addr, "%s", x);
+            }
+            api_superroot_action(c, sub, addr);
+            close(c); return;
+        }
         if(!strcmp(method, "OPTIONS")){
             const char *r = "HTTP/1.1 204 No Content\r\nAccess-Control-Allow-Origin: *\r\n"
                             "Access-Control-Allow-Methods: GET,POST,OPTIONS\r\n"

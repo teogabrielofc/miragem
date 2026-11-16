@@ -222,7 +222,8 @@ footer{flex:0 0 auto;display:flex;justify-content:space-between;gap:16px;padding
       sr_restore_row:"Restaurar", sr_restore_sub:"volta as flags do grsec (ou reinicie)",
       sr_note:"Vale por boot. \"Rápido\" desliga lock + caps + gate (3 corridas) e faz o resto por sysctl; \"por corridas\" usa uma corrida por flag. Se a corrida falhar, a TV pode reiniciar.",
       sr_confirm:"aplicar superroot?", sr_applying:"aplicando…", sr_done:"superroot aplicado",
-      sr_fail:"falha ao aplicar", sr_restored:"flags restauradas", sr_nobinary:"srpatch ausente em /tmp/srpatch"
+      sr_fail:"falha ao aplicar", sr_restored:"flags restauradas", sr_nobinary:"srpatch ausente em /tmp/srpatch",
+      sr_unavailable:"indisponível", sr_no_lock:"este kernel não declara lock_optional; use \"por corridas\""
     },
     en: {
       nav_home:"Home", nav_services:"Services", nav_apps:"Apps", nav_about:"Settings",
@@ -259,7 +260,8 @@ footer{flex:0 0 auto;display:flex;justify-content:space-between;gap:16px;padding
       sr_restore_row:"Restore", sr_restore_sub:"turn grsec flags back on (or reboot)",
       sr_note:"Lasts until reboot. \"Fast\" turns off lock + caps + gate (3 races) and does the rest over sysctl; \"races\" uses one race per flag. If a race fails, the TV may reboot.",
       sr_confirm:"apply superroot?", sr_applying:"applying…", sr_done:"superroot applied",
-      sr_fail:"apply failed", sr_restored:"flags restored", sr_nobinary:"srpatch missing at /tmp/srpatch"
+      sr_fail:"apply failed", sr_restored:"flags restored", sr_nobinary:"srpatch missing at /tmp/srpatch",
+      sr_unavailable:"unavailable", sr_no_lock:"this kernel does not declare lock_optional; use \"races\""
     },
     es: {
       nav_home:"Inicio", nav_services:"Servicios", nav_apps:"Aplicaciones", nav_about:"Ajustes",
@@ -296,7 +298,8 @@ footer{flex:0 0 auto;display:flex;justify-content:space-between;gap:16px;padding
       sr_restore_row:"Restaurar", sr_restore_sub:"vuelve las flags de grsec (o reinicia)",
       sr_note:"Dura hasta el reboot. \"Rápido\" apaga lock + caps + gate (3 carreras) y hace el resto por sysctl; \"por carreras\" usa una carrera por flag. Si falla, la TV puede reiniciar.",
       sr_confirm:"aplicar superroot?", sr_applying:"aplicando…", sr_done:"superroot aplicado",
-      sr_fail:"fallo al aplicar", sr_restored:"flags restauradas", sr_nobinary:"srpatch ausente en /tmp/srpatch"
+      sr_fail:"fallo al aplicar", sr_restored:"flags restauradas", sr_nobinary:"srpatch ausente en /tmp/srpatch",
+      sr_unavailable:"no disponible", sr_no_lock:"este kernel no declara lock_optional; usa \"por carreras\""
     }
   };
   if (!STR[lang]) lang = 'pt';
@@ -390,6 +393,29 @@ footer{flex:0 0 auto;display:flex;justify-content:space-between;gap:16px;padding
     });
   }
 
+  var srCfg = { lockOptional: true, lockAddr: '0x8091e574' };
+  function loadTargets(){
+    fetch('/api/targets', {cache:'no-store'}).then(function(r){ return r.ok ? r.json() : null; })
+      .then(function(j){
+        if(!j || !j.targets || !j.targets.length) return;
+        var id = null;
+        try{ id = localStorage.getItem('miragem.target'); }catch(e){}
+        var t = null;
+        for(var i = 0; i < j.targets.length; i++) if(j.targets[i].id === id) t = j.targets[i];
+        if(!t) t = j.targets[0];
+        var sr = t.superroot || {};
+        srCfg.lockOptional = sr.lock_optional !== false;
+        if(sr.grsec_lock) srCfg.lockAddr = sr.grsec_lock;
+        var b = $('#b-sr-lock');
+        if(b && !srCfg.lockOptional){
+          b.disabled = true;
+          b.textContent = T('sr_unavailable');
+        }
+        var note = $('#sr-note');
+        if(note && !srCfg.lockOptional) note.textContent = T('sr_no_lock');
+      }).catch(function(){});
+  }
+
   function renderSuperroot(s){
     var el = $('#sr-state');
     if(!el) return;
@@ -406,7 +432,9 @@ footer{flex:0 0 auto;display:flex;justify-content:space-between;gap:16px;padding
   }
   function srAction(p){
     toast(T('sr_applying'));
-    api('/api/superroot/' + p, {method:'POST'}).then(function(r){
+    var path = p;
+    if(p === 'apply/lock' && srCfg.lockAddr) path = 'apply/lock/' + encodeURIComponent(srCfg.lockAddr);
+    api('/api/superroot/' + path, {method:'POST'}).then(function(r){
       toast(r && r.ok ? T('sr_done') : T('sr_fail'));
       renderSuperroot(r);
       setTimeout(loadSuperroot, 600);
@@ -417,6 +445,7 @@ footer{flex:0 0 auto;display:flex;justify-content:space-between;gap:16px;padding
       .catch(function(){ st.api = false; offline(); });
     api('/api/plugins').then(renderPlugins).catch(function(){});
     loadSuperroot();
+    loadTargets();
   }
   function offline(){
     $('#api-state').textContent = T('api_offline');
