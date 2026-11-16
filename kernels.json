@@ -91,7 +91,8 @@
           "unix",
           "shmat"
         ],
-        "note": "escrever 0 (u32) em grsec_block+offset, uma variavel por corrida; ver docs/SUPERROOT.md"
+        "note": "escrever 0 (u32) em grsec_block+offset, uma variavel por corrida; grsec_lock (0x8091e574) e opcional: desliga-lo libera o resto por sysctl (1 corrida); ver docs/SUPERROOT.md",
+        "lock_optional": true
       }
     }
   ]

@@ -37,10 +37,31 @@ Cada flag é um `int` (4 bytes); escrever **0** desliga.
 | `chroot_deny_bad_rename` | `0x8091e560` | `rename` para fora |
 | `chroot_deny_sysctl` | `0x8091e564` | libera o gate de sysctl (o write em si continua bloqueado por `grsec_lock=1`) |
 
-Ficam **ligados** de propósito: `chroot_deny_fchdir` (`0x8091e53c`),
+Ficam **ligados** por padrão: `chroot_deny_fchdir` (`0x8091e53c`),
 `chroot_deny_pivot` (`0x8091e548`), `tpe`/`tpe_restrict_all`, `grsec_lock`
 (`0x8091e574`), `dmesg`, `linking_restrictions`, `deter_bruteforce`,
 `fifo_restrictions`, `rwxmap_logging`.
+
+### 2.1 `grsec_lock` é opcional (e vale a pena)
+
+`grsec_lock=1` não impede as escritas de memória — só bloqueia o caminho
+**sysctl** (`echo` em `/proc/sys/kernel/grsecurity/*`). Desligá-lo custa **uma**
+escrita (`0x8091e574 ← 0`) e libera todo o resto por sysctl, **sem mais
+corridas**:
+
+```sh
+/tmp/srpatch w 0x8091e574 0
+cat /proc/sys/kernel/grsecurity/grsec_lock          # 0
+echo 0 > /proc/sys/kernel/grsecurity/chroot_deny_fchdir
+echo 0 > /proc/sys/kernel/grsecurity/chroot_deny_pivot
+```
+
+Testado no H536X em 2026-11-16: a primeira corrida pode não completar (sem
+crash, valor fica 1); a segunda aplica. Depois do lock=0, `echo` num flag
+(com `chroot_deny_sysctl=0` e `chroot_caps=0`) retorna 0 — dá para terminar o
+conjunto inteiro com **1 corrida** em vez de N. Custo: grsec destravado até o
+reboot (qualquer root pode mexer) e a Roku pode reafirmar o lock em algum boot
+(não observado).
 
 ## 3. Como aplicar
 
@@ -75,8 +96,9 @@ Regras aprendidas na prática:
   `*(valor)=alvo-4`. A “leitura” acaba corrompendo o vizinho (`alvo-4`).
   Valide pelo **sysctl** (`/proc/sys/kernel/grsecurity/<nome>`) e pelo efeito;
 - escrita com `valor=0` faz só a primeira palavra (segura);
-- `grsec_lock=1` continua impedindo `echo` em `/proc/sys/kernel/grsecurity/*`.
-  O caminho é sempre a escrita via GhostLock — não tente `sysctl` como atalho;
+- `grsec_lock=1` impede `echo` em `/proc/sys/kernel/grsecurity/*`, mas as
+  escritas de memória continuam valendo. Se quiser o caminho sysctl, desligue
+  o lock primeiro (uma escrita) — veja §2.1;
 - se a TV reiniciar, pare e reporte o último passo; não repita o endereço.
 
 ## 4. O que passa a funcionar (medido)
@@ -120,6 +142,16 @@ O `miragemd` (porta 8090) ganha:
 - `POST /api/superroot/restore` → `srpatch restore`;
 - linha “Superroot” em **Ajustes** no `app/manager.html` (PT/EN/ES) com aviso
   de que vale por boot e que pode reiniciar a TV.
+
+## 6.1 Persistir o estado (importante)
+
+A patch e o `srpatch` vivem em `/tmp` (some no reboot). Guarde **fora de
+`/tmp`** (no PC, em disco):
+
+- o binário testado e o `srpatch.c` (com sha256);
+- um `STATE.json` com flag → endereço → valor atual (e o default de boot);
+- um script de reaplicação em ordem, uma escrita por linha, com `--check`
+  (só lê os sysctls e compara) antes de reaplicar depois de re-rootar.
 
 ## 7. Aviso
 
