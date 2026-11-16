@@ -107,7 +107,8 @@ if (existsSync(join(dist, 'index.html'))) {
 /* links relativos da documentacao */
 for (const f of ['README.md', 'CONTRIBUTING.md',
                  'docs/QUICKSTART.md', 'docs/INSTALL.md', 'docs/SITE.md',
-                 'docs/PORTING.md', 'docs/KERNELS.md', 'docs/SUPERROOT.md']) {
+                 'docs/PORTING.md', 'docs/KERNELS.md', 'docs/SUPERROOT.md',
+                 'docs/RMP-DLNA.md']) {
   if (!existsSync(join(root, f))) continue;
   const txt = readFileSync(join(root, f), 'utf8');
   for (const m of txt.matchAll(/\]\((?!https?:|mailto:|#)([^)#]+)/g)) {

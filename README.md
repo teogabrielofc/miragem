@@ -98,6 +98,7 @@ entrypoint** (trabalho futuro), não só offsets novos: veja
 |---|---|
 | Root (uid=0) na TV | **Funciona** — GhostLock em `rt_mutex`, kernel 4.9.118 |
 | Superroot (grsec off) | **Funciona por boot** — `/proc` completo, `mount`, `dmesg`, `chmod +s`, `mknod` (12 flags; `docs/SUPERROOT.md`) |
+| DLNA no USB Media Player | **Por sessão** — bind do manifesto (`usbonly=0`) + cold start (`docs/RMP-DLNA.md`) |
 | Shell root | **Funciona** — PTY em TCP 2222, cliente `tools/tvsh` |
 | Instalador USB (app Ginga) | **Funciona** com o PC na mesma rede rodando os servidores |
 | Gerenciador (8090) | **Funciona** — status, tvsh on/off, plugins, flags de dev mode |
@@ -158,6 +159,7 @@ assets/    logo.png · banner.png (wordmark do Miragem)
 tools/     tvsh · tvcmd/tvget/tvput · auto_root · srvrld_multi · start_servers
            build.mjs (site) · dev_server.mjs · check_site.mjs · test_installer.mjs
            install_manager.sh (miragemd + srpatch na TV, persiste em /nvram)
+           rmp_dlna.sh (DLNA no 2213 por sessão: bind do manifesto + cold start)
            miragemd.c (servidor local) · miragemd.arm (binário ARM)
 exploit/   gx.c · gx_bind.c · rootagent.c · rootboot.c · mtdtool.c · pack.py
            srpatch.c (superroot: desliga as travas do grsecurity, por boot)
@@ -165,7 +167,7 @@ foothold/  página Ginga, addons mitmproxy, base do exploit V8, README
 windows/   roku_root.bat (lançador Windows: mitmweb + servidores + tvsh)
 vercel.json  build + output + rotas + headers do projeto na Vercel
 docs/      QUICKSTART.md · INSTALL.md · SITE.md · RE.md · PORTING.md · KERNELS.md
-           SUPERROOT.md · LEGAL.md
+           SUPERROOT.md · RMP-DLNA.md · LEGAL.md
 kernels.json  tabela de kernels/offsets suportados (fonte de verdade)
 CONTRIBUTING.md  regras para PR (kernel, payload, docs)
 ```
