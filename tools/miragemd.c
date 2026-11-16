@@ -354,7 +354,9 @@ static void api_superroot_action(int c, const char *sub, const char *lockaddr){
         if(sr_get("grsec_lock", v, sizeof v) != 0 || strcmp(v, "0")){
             char lc[128];
             snprintf(lc, sizeof lc, SRPATCH " w %s 0", lockaddr);
-            if(run(lc) != 0 && run(lc) != 0)
+            (void)run(lc); (void)run(lc);
+            usleep(50000);
+            if(sr_get("grsec_lock", v, sizeof v) != 0 || strcmp(v, "0"))
                 { ok = 0; strncat(log, "lock falhou; ", sizeof log - strlen(log) - 1); }
         }
         /* 2) caps e gate de sysctl sao pre-requisito para o echo (1 corrida cada) */
