@@ -140,12 +140,14 @@ O `miragemd` (porta 8090) expõe:
 | Rota | O que faz |
 |---|---|
 | `GET /api/superroot` | `{ok, active, findtask, lock, pids, pid1, binary, path}` |
-| `POST /api/superroot/apply/lock` | **rápido**: 3 corridas (lock, caps, gate de sysctl) e o resto por `echo` |
+| `POST /api/superroot/apply/lock/<addr>` | **rápido**: 3 corridas (lock, caps, gate de sysctl) e o resto por `echo`; `<addr>` é o `grsec_lock` do alvo (vem do `kernels.json`) |
 | `POST /api/superroot/apply/races` | **uma corrida por flag** (não usa o lock) |
 | `POST /api/superroot/restore` | volta as flags via sysctl (ordem: caps/sysctl por último) |
 
 Todos são idempotentes (pulam flags que já estão em 0) e devolvem o status
-atualizado. O app tem a seção **Superroot** em *Ajustes* (`app/manager.html`,
+atualizado. O app só habilita o modo rápido se o alvo declarar
+`superroot.lock_optional: true` em `kernels.json` (e usa o endereço
+`superroot.grsec_lock`); sem isso, ele oferece só “por corridas”. O app tem a seção **Superroot** em *Ajustes* (`app/manager.html`,
 PT/EN/ES) com os três botões e o aviso de reboot.
 
 Pré-requisito: `/tmp/srpatch` executável na TV (66 KB; o instalador pode
