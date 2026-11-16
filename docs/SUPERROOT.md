@@ -133,15 +133,24 @@ Como achar no kernel novo (sem KASLR):
 Sem os endereços do bloco grsec, o root funciona e o superroot não — e um
 endereço errado pode derrubar a TV (a corrida já é instável por si).
 
-## 6. Integração no gerenciador (planejado)
+## 6. Integração no gerenciador (implementada)
 
-O `miragemd` (porta 8090) ganha:
+O `miragemd` (porta 8090) expõe:
 
-- `GET /api/superroot` → `{active, pids, pid1, binary}`;
-- `POST /api/superroot/apply` → roda `srpatch` passo a passo;
-- `POST /api/superroot/restore` → `srpatch restore`;
-- linha “Superroot” em **Ajustes** no `app/manager.html` (PT/EN/ES) com aviso
-  de que vale por boot e que pode reiniciar a TV.
+| Rota | O que faz |
+|---|---|
+| `GET /api/superroot` | `{ok, active, findtask, lock, pids, pid1, binary, path}` |
+| `POST /api/superroot/apply/lock` | **rápido**: 3 corridas (lock, caps, gate de sysctl) e o resto por `echo` |
+| `POST /api/superroot/apply/races` | **uma corrida por flag** (não usa o lock) |
+| `POST /api/superroot/restore` | volta as flags via sysctl (ordem: caps/sysctl por último) |
+
+Todos são idempotentes (pulam flags que já estão em 0) e devolvem o status
+atualizado. O app tem a seção **Superroot** em *Ajustes* (`app/manager.html`,
+PT/EN/ES) com os três botões e o aviso de reboot.
+
+Pré-requisito: `/tmp/srpatch` executável na TV (66 KB; o instalador pode
+entregá-lo junto com o resto — ele vive em `/tmp` e some no reboot). Sem ele a
+API responde `binary:false` e o app mostra “srpatch ausente”.
 
 ## 6.1 Persistir o estado (importante)
 

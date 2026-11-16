@@ -159,6 +159,14 @@ footer{flex:0 0 auto;display:flex;justify-content:space-between;gap:16px;padding
         <div class="rows">
           <div class="row"><div class="rc"><div class="rt" data-i18n="dev_row">Modo desenvolvedor</div><div class="rs" data-i18n="dev_row_sub">grava as flags do instalador de canais</div></div><button class="btn" id="b-dev" data-i18n="btn_activate">Ativar</button></div>
         </div>
+
+        <p class="eyebrow" style="margin-top:26px" data-i18n="sr_eyebrow">Superroot</p>
+        <div class="rows">
+          <div class="row"><div class="rc"><div class="rt" data-i18n="sr_row">Superroot</div><div class="rs" id="sr-state" data-i18n="sr_off">não aplicado</div></div><button class="btn" id="b-sr-lock" data-i18n="sr_apply_lock">Aplicar (rápido)</button></div>
+          <div class="row"><div class="rc"><div class="rt" data-i18n="sr_races_row">Forçar por corridas</div><div class="rs" data-i18n="sr_races_sub">uma corrida por flag, sem o lock</div></div><button class="btn" id="b-sr-races" data-i18n="sr_apply_races">Aplicar</button></div>
+          <div class="row"><div class="rc"><div class="rt" data-i18n="sr_restore_row">Restaurar</div><div class="rs" data-i18n="sr_restore_sub">volta as flags do grsec (ou reinicie)</div></div><button class="btn warn" id="b-sr-restore" data-i18n="sr_restore">Restaurar</button></div>
+        </div>
+        <p class="hint" id="sr-note" data-i18n="sr_note">Vale por boot. Aplicar pode levar alguns segundos e, se a corrida falhar, a TV reinicia (você reaplica o Miragem).</p>
         <p class="hint" data-i18n="about_hint">Miragem v1 · pesquisa no próprio aparelho</p>
       </section>
     </main>
@@ -206,7 +214,15 @@ footer{flex:0 0 auto;display:flex;justify-content:space-between;gap:16px;padding
       toast_offline:"serviço local offline", toast_updated:"atualizado", toast_plugin:"Plugin ",
       toast_agent:"agente 2323: use o instalador para subir", toast_root:"abra a página do instalador para reinstalar",
       toast_tvsh_on:"shell ligado na 2222", toast_tvsh_off:"shell desligado", toast_dev:"flags gravadas; reinicie a TV",
-      toast_dev_fail:"falha ao gravar as flags"
+      toast_dev_fail:"falha ao gravar as flags",
+      sr_eyebrow:"Superroot", sr_row:"Superroot", sr_off:"não aplicado",
+      sr_on:"ativo · {pids} processos · pid1 {p1}", sr_on_nolock:"ativo · lock {lock}",
+      sr_apply_lock:"Aplicar (rápido)", sr_apply_races:"Aplicar", sr_restore:"Restaurar",
+      sr_races_row:"Forçar por corridas", sr_races_sub:"uma corrida por flag, sem o lock",
+      sr_restore_row:"Restaurar", sr_restore_sub:"volta as flags do grsec (ou reinicie)",
+      sr_note:"Vale por boot. \"Rápido\" desliga lock + caps + gate (3 corridas) e faz o resto por sysctl; \"por corridas\" usa uma corrida por flag. Se a corrida falhar, a TV pode reiniciar.",
+      sr_confirm:"aplicar superroot?", sr_applying:"aplicando…", sr_done:"superroot aplicado",
+      sr_fail:"falha ao aplicar", sr_restored:"flags restauradas", sr_nobinary:"srpatch ausente em /tmp/srpatch"
     },
     en: {
       nav_home:"Home", nav_services:"Services", nav_apps:"Apps", nav_about:"Settings",
@@ -235,7 +251,15 @@ footer{flex:0 0 auto;display:flex;justify-content:space-between;gap:16px;padding
       toast_offline:"local service offline", toast_updated:"updated", toast_plugin:"Plugin ",
       toast_agent:"agent 2323: use the installer to start it", toast_root:"open the installer page to reinstall",
       toast_tvsh_on:"shell on at 2222", toast_tvsh_off:"shell off", toast_dev:"flags saved; reboot the TV",
-      toast_dev_fail:"could not write the flags"
+      toast_dev_fail:"could not write the flags",
+      sr_eyebrow:"Superroot", sr_row:"Superroot", sr_off:"not applied",
+      sr_on:"active · {pids} processes · pid1 {p1}", sr_on_nolock:"active · lock {lock}",
+      sr_apply_lock:"Apply (fast)", sr_apply_races:"Apply", sr_restore:"Restore",
+      sr_races_row:"Force with races", sr_races_sub:"one race per flag, no lock",
+      sr_restore_row:"Restore", sr_restore_sub:"turn grsec flags back on (or reboot)",
+      sr_note:"Lasts until reboot. \"Fast\" turns off lock + caps + gate (3 races) and does the rest over sysctl; \"races\" uses one race per flag. If a race fails, the TV may reboot.",
+      sr_confirm:"apply superroot?", sr_applying:"applying…", sr_done:"superroot applied",
+      sr_fail:"apply failed", sr_restored:"flags restored", sr_nobinary:"srpatch missing at /tmp/srpatch"
     },
     es: {
       nav_home:"Inicio", nav_services:"Servicios", nav_apps:"Aplicaciones", nav_about:"Ajustes",
@@ -264,7 +288,15 @@ footer{flex:0 0 auto;display:flex;justify-content:space-between;gap:16px;padding
       toast_offline:"servicio local sin conexión", toast_updated:"actualizado", toast_plugin:"Plugin ",
       toast_agent:"agente 2323: usa el instalador para iniciarlo", toast_root:"abre la página del instalador para reinstalar",
       toast_tvsh_on:"shell encendido en 2222", toast_tvsh_off:"shell apagado", toast_dev:"flags guardadas; reinicia la TV",
-      toast_dev_fail:"no se pudieron guardar las flags"
+      toast_dev_fail:"no se pudieron guardar las flags",
+      sr_eyebrow:"Superroot", sr_row:"Superroot", sr_off:"no aplicado",
+      sr_on:"activo · {pids} procesos · pid1 {p1}", sr_on_nolock:"activo · lock {lock}",
+      sr_apply_lock:"Aplicar (rápido)", sr_apply_races:"Aplicar", sr_restore:"Restaurar",
+      sr_races_row:"Forzar por carreras", sr_races_sub:"una carrera por flag, sin el lock",
+      sr_restore_row:"Restaurar", sr_restore_sub:"vuelve las flags de grsec (o reinicia)",
+      sr_note:"Dura hasta el reboot. \"Rápido\" apaga lock + caps + gate (3 carreras) y hace el resto por sysctl; \"por carreras\" usa una carrera por flag. Si falla, la TV puede reiniciar.",
+      sr_confirm:"aplicar superroot?", sr_applying:"aplicando…", sr_done:"superroot aplicado",
+      sr_fail:"fallo al aplicar", sr_restored:"flags restauradas", sr_nobinary:"srpatch ausente en /tmp/srpatch"
     }
   };
   if (!STR[lang]) lang = 'pt';
@@ -358,10 +390,33 @@ footer{flex:0 0 auto;display:flex;justify-content:space-between;gap:16px;padding
     });
   }
 
+  function renderSuperroot(s){
+    var el = $('#sr-state');
+    if(!el) return;
+    if(s && s.binary === false){ el.textContent = T('sr_nobinary'); return; }
+    if(s && s.active){
+      el.textContent = T('sr_on').split('{pids}').join(s.pids)
+        .split('{p1}').join(s.pid1 || '?');
+    } else {
+      el.textContent = T('sr_off');
+    }
+  }
+  function loadSuperroot(){
+    api('/api/superroot').then(renderSuperroot).catch(function(){});
+  }
+  function srAction(p){
+    toast(T('sr_applying'));
+    api('/api/superroot/' + p, {method:'POST'}).then(function(r){
+      toast(r && r.ok ? T('sr_done') : T('sr_fail'));
+      renderSuperroot(r);
+      setTimeout(loadSuperroot, 600);
+    }).catch(function(){ toast(T('toast_offline')); });
+  }
   function load(){
     api('/api/status').then(function(s){ st.api = true; renderStatus(s); paint(); })
       .catch(function(){ st.api = false; offline(); });
     api('/api/plugins').then(renderPlugins).catch(function(){});
+    loadSuperroot();
   }
   function offline(){
     $('#api-state').textContent = T('api_offline');
@@ -461,6 +516,9 @@ footer{flex:0 0 auto;display:flex;justify-content:space-between;gap:16px;padding
   $('#b-ag2323').addEventListener('click', function(){ toast(T('toast_agent')); });
   $('#b-refresh').addEventListener('click', function(){ load(); toast(T('toast_updated')); });
   $('#b-dev').addEventListener('click', devmode);
+  $('#b-sr-lock').addEventListener('click', function(){ srAction('apply/lock'); });
+  $('#b-sr-races').addEventListener('click', function(){ srAction('apply/races'); });
+  $('#b-sr-restore').addEventListener('click', function(){ srAction('restore'); });
 
   applyLang();
   setView('home'); paint(); load();

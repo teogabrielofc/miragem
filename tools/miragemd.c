@@ -30,6 +30,8 @@
 #define DEF_PORT 8090
 #define DEF_DIR  "/tmp/miragem/www"
 #define AGENT    "/tmp/ra6"
+#define SRPATCH  "/tmp/srpatch"
+#define GRSYS    "/proc/sys/kernel/grsecurity"
 #define LINKDB   "/nvram/system.conf.db"
 #define LINKDBE  "/bin/linkdbedit"
 
@@ -231,6 +233,160 @@ static void api_plugins(int c){
     send(c,hdr,(size_t)hl,0); send(c,body,o,0);
 }
 
+/* --- superroot (grsec off, por boot) ------------------------------------ */
+
+static const char *SR_FLAGS[] = {
+    "chroot_findtask", "chroot_deny_unix", "chroot_deny_mount",
+    "chroot_deny_shmat", "chroot_deny_chroot", "chroot_enforce_chdir",
+    "chroot_deny_chmod", "chroot_deny_mknod", "chroot_restrict_nice",
+    "chroot_caps", "chroot_deny_bad_rename", "chroot_deny_sysctl", NULL
+};
+static const char *SR_OPT[] = { "chroot_deny_fchdir", "chroot_deny_pivot", NULL };
+
+static void send_json(int c, const char *body){
+    int n = (int)strlen(body);
+    char hdr[256];
+    int hl = snprintf(hdr,sizeof hdr,
+        "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: %d\r\n"
+        "Cache-Control: no-store\r\nAccess-Control-Allow-Origin: *\r\nConnection: close\r\n\r\n", n);
+    send(c,hdr,(size_t)hl,0); send(c,body,(size_t)n,0);
+}
+
+static int sr_get(const char *name, char *buf, size_t n){
+    char cmd[256];
+    snprintf(cmd,sizeof cmd,"cat %s/%s 2>/dev/null", GRSYS, name);
+    buf[0] = 0;
+    return read_cmd(cmd, buf, n) < 0 ? -1 : 0;
+}
+
+static int sr_set(const char *name, int val){
+    char cmd[256];
+    snprintf(cmd,sizeof cmd,"echo %d > %s/%s 2>/dev/null", val, GRSYS, name);
+    return run(cmd);
+}
+
+static int sr_pids(void){
+    char b[32];
+    if(read_cmd("ls -d /proc/[0-9]* 2>/dev/null | wc -l", b, sizeof b) < 0) return -1;
+    return atoi(b);
+}
+
+static void sr_status_fields(char *body, size_t n){
+    char ft[32] = "", lk[32] = "", p1[64] = "";
+    sr_get("chroot_findtask", ft, sizeof ft);
+    sr_get("grsec_lock", lk, sizeof lk);
+    read_cmd("cat /proc/1/comm 2>/dev/null", p1, sizeof p1);
+    int pids = sr_pids();
+    int active = !strcmp(ft, "0");
+    char ep1[128]; jstr(ep1, sizeof ep1, p1);
+    snprintf(body, n,
+        "\"active\":%s,\"findtask\":%s,\"lock\":%s,\"pids\":%d,\"pid1\":\"%s\","
+        "\"binary\":%s,\"path\":\"" SRPATCH "\"",
+        active ? "true" : "false",
+        ft[0] ? ft : "null",
+        lk[0] ? lk : "null",
+        pids, ep1,
+        access(SRPATCH, X_OK) == 0 ? "true" : "false");
+}
+
+static void api_superroot(int c){
+    char st[512], body[768];
+    sr_status_fields(st, sizeof st);
+    snprintf(body, sizeof body, "{\"ok\":true,%s}", st);
+    send_json(c, body);
+}
+
+static int sr_ensure(const char *name, int tries){
+    char cmd[256], v[32];
+    int i;
+    for(i = 0; i < tries; i++){
+        if(sr_get(name, v, sizeof v) == 0 && !strcmp(v, "0")) return 1;
+        snprintf(cmd, sizeof cmd, SRPATCH " step %s --no-prim", name);
+        (void)run(cmd);
+    }
+    return sr_get(name, v, sizeof v) == 0 && !strcmp(v, "0");
+}
+
+static void api_superroot_action(int c, const char *sub){
+    int ok = 1, i;
+    char log[1024];
+    log[0] = 0;
+    const char *mode = "?";
+
+    if(access(SRPATCH, X_OK) != 0){
+        char st[512], body[768];
+        sr_status_fields(st, sizeof st);
+        snprintf(body, sizeof body,
+            "{\"ok\":false,\"mode\":\"none\",\"msg\":\"" SRPATCH " ausente ou sem +x\",%s}", st);
+        send_json(c, body);
+        return;
+    }
+
+    if(!strcmp(sub, "apply/lock")){
+        mode = "lock";
+        char v[32];
+        /* 1) lock (1 corrida) */
+        if(sr_get("grsec_lock", v, sizeof v) != 0 || strcmp(v, "0")){
+            if(run(SRPATCH " w 0x8091e574 0") != 0 && run(SRPATCH " w 0x8091e574 0") != 0)
+                { ok = 0; strncat(log, "lock falhou; ", sizeof log - strlen(log) - 1); }
+        }
+        /* 2) caps e gate de sysctl sao pre-requisito para o echo (1 corrida cada) */
+        if(ok && !sr_ensure("chroot_caps", 4))
+            { ok = 0; strncat(log, "caps falhou; ", sizeof log - strlen(log) - 1); }
+        if(ok && !sr_ensure("chroot_deny_sysctl", 4))
+            { ok = 0; strncat(log, "sysctl gate falhou; ", sizeof log - strlen(log) - 1); }
+        /* 3) o resto por echo (sysctl); segue mesmo se uma falhar */
+        for(i = 0; SR_FLAGS[i]; i++){
+            if(!strcmp(SR_FLAGS[i], "chroot_caps") || !strcmp(SR_FLAGS[i], "chroot_deny_sysctl")) continue;
+            if(sr_get(SR_FLAGS[i], v, sizeof v) == 0 && !strcmp(v, "0")) continue;
+            (void)sr_set(SR_FLAGS[i], 0);
+            usleep(50000);
+            if(sr_get(SR_FLAGS[i], v, sizeof v) != 0 || strcmp(v, "0")){
+                ok = 0;
+                strncat(log, SR_FLAGS[i], sizeof log - strlen(log) - 1);
+                strncat(log, " ", sizeof log - strlen(log) - 1);
+            }
+        }
+        for(i = 0; SR_OPT[i]; i++) (void)sr_set(SR_OPT[i], 0);
+    } else if(!strcmp(sub, "apply/races")){
+        mode = "races";
+        for(i = 0; SR_FLAGS[i]; i++){
+            char v[32];
+            if(sr_get(SR_FLAGS[i], v, sizeof v) == 0 && !strcmp(v, "0")) continue;
+            if(!sr_ensure(SR_FLAGS[i], 4)){
+                ok = 0;
+                strncat(log, SR_FLAGS[i], sizeof log - strlen(log) - 1);
+                strncat(log, " ", sizeof log - strlen(log) - 1);
+            }
+        }
+        for(i = 0; SR_OPT[i]; i++) (void)sr_ensure(SR_OPT[i], 2);
+    } else if(!strcmp(sub, "restore")){
+        mode = "restore";
+        /* ordem importa: caps e sysctl por ultimo, senao os echos seguintes falham */
+        for(i = 0; SR_FLAGS[i]; i++){
+            if(!strcmp(SR_FLAGS[i], "chroot_caps") || !strcmp(SR_FLAGS[i], "chroot_deny_sysctl")) continue;
+            (void)sr_set(SR_FLAGS[i], 1);
+        }
+        for(i = 0; SR_OPT[i]; i++) (void)sr_set(SR_OPT[i], 1);
+        (void)sr_set("chroot_deny_sysctl", 1);
+        (void)sr_set("chroot_caps", 1);
+        (void)sr_set("grsec_lock", 1);
+    } else {
+        char st[512], body[768];
+        sr_status_fields(st, sizeof st);
+        snprintf(body, sizeof body, "{\"ok\":false,\"mode\":\"unknown\",%s}", st);
+        send_json(c, body);
+        return;
+    }
+
+    char st[512], body[1400], elog[1100];
+    sr_status_fields(st, sizeof st);
+    jstr(elog, sizeof elog, log);
+    snprintf(body, sizeof body, "{\"ok\":%s,\"mode\":\"%s\",\"msg\":\"%s\",%s}",
+        ok ? "true" : "false", mode, elog, st);
+    send_json(c, body);
+}
+
 static void api_action(int c, const char *what){
     char body[512];
     if(!strcmp(what, "tvsh/start")){
@@ -299,6 +455,8 @@ static void handle(int c){
         if(!strcmp(a, "status"))  { api_status(c); close(c); return; }
         if(!strcmp(a, "plugins")) { api_plugins(c); close(c); return; }
         if(!strcmp(a, "info"))    { api_status(c); close(c); return; }
+        if(!strcmp(a, "superroot")) { api_superroot(c); close(c); return; }
+        if(!strncmp(a, "superroot/", 10)) { api_superroot_action(c, a + 10); close(c); return; }
         if(!strcmp(method, "OPTIONS")){
             const char *r = "HTTP/1.1 204 No Content\r\nAccess-Control-Allow-Origin: *\r\n"
                             "Access-Control-Allow-Methods: GET,POST,OPTIONS\r\n"
