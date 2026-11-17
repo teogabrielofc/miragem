@@ -1,6 +1,6 @@
 {
   "name": "miragem",
-  "version": "0.1.0",
+  "version": "0.3.0",
   "private": true,
   "description": "Root e gerenciador homebrew para TVs Roku com Ginga no Roku OS 15.0.4",
   "license": "MIT",
