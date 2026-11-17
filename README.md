@@ -64,6 +64,7 @@ não redistribui firmware nem código proprietário da Roku.
 - [Guia rápido](#guia-rápido-do-zero-ao-root)
 - [Início rápido](#início-rápido)
 - [HTTPS, domínio e o instalador USB](#https-domínio-e-o-instalador-usb)
+- [Tela no PC (mirror)](#tela-no-pc-mirror)
 - [Portar para outro kernel](#portar-para-outro-kernel)
 - [Aviso](#aviso)
 - [Licença](#licença)
@@ -100,6 +101,7 @@ entrypoint** (trabalho futuro), não só offsets novos: veja
 | Superroot (grsec off) | **Funciona por boot** — `/proc` completo, `mount`, `dmesg`, `chmod +s`, `mknod` (12 flags; `docs/SUPERROOT.md`) |
 | DLNA no USB Media Player | **Por sessão** — bind do manifesto (`usbonly=0`) + cold start seletivo (`docs/RMP-DLNA.md`) |
 | App custom (ZIP) | **Por sessão** — ZIP/FUSE em slot lançável, manifest original (token), cache invalidado e kill seletivo (`tools/zipapp.sh`; `docs/SUPERROOT.md`) |
+| Tela no PC (mirror) | **Funciona por sessão** — fb1 por tiles em TCP 2331, janela no PC (`tools/screen.sh`; sem áudio; vídeo `fb0` não aparece) |
 | Shell root | **Funciona** — PTY em TCP 2222, cliente `tools/tvsh` |
 | Instalador USB (app Ginga) | **Funciona** com o PC na mesma rede rodando os servidores |
 | Gerenciador (8090) | **Funciona** — status, tvsh on/off, plugins, dev mode, app custom (ZIP) e DLNA |
@@ -166,6 +168,8 @@ tools/     tvsh · tvcmd/tvget/tvput · auto_root · srvrld_multi · start_serve
            mqfd.c (mqueue do ZipMountServer) · ecp.c (HTTP/ECP minimo)
            ecp_relay.py (relay do ECP no PC; a TV recusa loopback)
            rmp_dlna.sh (DLNA no 2213 por sessão: bind do manifesto + cold start)
+           screen.sh (espelha a tela no PC) · tvscreen.py (janela/shot)
+           fbserve.c (fb1 -> TCP, tiles 64x64) · fbserve.arm (binário ARM)
            miragemd.c (servidor local) · miragemd.arm (binário ARM)
 exploit/   gx.c · gx_bind.c · rootagent.c · rootboot.c · mtdtool.c · pack.py
            srpatch.c (superroot: desliga as travas do grsecurity, por boot)
@@ -173,7 +177,7 @@ foothold/  página Ginga, addons mitmproxy, base do exploit V8, README
 windows/   roku_root.bat (lançador Windows: mitmweb + servidores + tvsh)
 vercel.json  build + output + rotas + headers do projeto na Vercel
 docs/      QUICKSTART.md · INSTALL.md · SITE.md · RE.md · PORTING.md · KERNELS.md
-           SUPERROOT.md · RMP-DLNA.md · LEGAL.md
+           SUPERROOT.md · RMP-DLNA.md · SCREEN.md · LEGAL.md
 kernels.json  tabela de kernels/offsets suportados (fonte de verdade)
 CONTRIBUTING.md  regras para PR (kernel, payload, docs)
 ```
@@ -267,6 +271,26 @@ Limites: só **ids já registrados no boot e lançáveis** (id novo em runtime d
 404), só pacotes **ZIP/FUSE**, precisa de root/superroot e o kill é **um**
 `SdkLauncher` por vez. Reboot volta ao stock; detalhes em
 **`docs/SUPERROOT.md`** §6.2 e **`docs/RMP-DLNA.md`**.
+
+## Tela no PC (mirror)
+
+Com root ativo, dá para ver a UI da TV no PC e tirar screenshot, no estilo do
+scrcpy (sem áudio). A TV envia só os tiles que mudaram; parado não trafega.
+
+```sh
+# janela ao vivo (Ctrl-C encerra)
+ROKU_HOST=192.168.1.100 bash tools/screen.sh
+
+# screenshot PNG
+ROKU_HOST=192.168.1.100 bash tools/screen.sh shot tela.png
+
+# encerrar o servidor na TV (se precisar)
+ROKU_HOST=192.168.1.100 bash tools/screen.sh stop
+```
+
+Detalhes, protocolo, build do `fbserve.arm` e limites em **`docs/SCREEN.md`**.
+Resumo dos limites: só a **UI (fb1)** aparece — o plano de vídeo (`fb0`, apps de
+streaming/HDMI) fica preto; sem áudio e sem controle remoto pelo PC.
 
 ## HTTPS, site e API
 

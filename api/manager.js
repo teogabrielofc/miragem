@@ -25,7 +25,8 @@ const path = require('path');
 
 const ROOT = path.join(process.cwd(), 'tools');
 const FILES = ['miragemd.arm', 'mqfd.arm', 'ecp.arm', 'zipapp.sh', 'ecp_relay.py',
-  'zipapp_apply.sh', 'dlna_apply.sh', 'tvsh', 'tvcmd.py', 'tvget.py', 'tvput.py'];
+  'zipapp_apply.sh', 'dlna_apply.sh', 'fbserve.arm', 'screen.sh', 'tvscreen.py',
+  'tvsh', 'tvcmd.py', 'tvget.py', 'tvput.py'];
 const TYPES = {
   '.arm': 'application/octet-stream',
   '.py': 'text/x-python; charset=utf-8',
