@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Miragem ZIP app sample: cena visivel com o marcador de prova. -->
+<component name="ZipAppScene" extends="Scene">
+    <interface>
+        <field id="launch_args" type="assocarray" />
+        <field id="exitChannel" type="boolean" value="false" />
+    </interface>
+    <script type="text/brightscript" uri="ZipAppScene.brs" />
+    <children>
+        <Label id="zipappTitle" text="Miragem ZIP app"
+               width="1200" height="90" horizAlign="center" vertAlign="center"
+               translation="[40,240]" color="0xFFFFFFFF" />
+        <Label id="zipappSub" text="compiled from mounted ZIP"
+               width="1200" height="70" horizAlign="center" vertAlign="center"
+               translation="[40,340]" color="0xCCCCCCFF" />
+    </children>
+</component>

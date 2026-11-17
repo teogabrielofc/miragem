@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
-import socket,sys,time,os
+import os,socket,sys,time
+HOST=os.environ.get('ROKU_HOST','192.168.1.100')
+PORT=int(os.environ.get('ROKU_PORT','2323'))
 path=sys.argv[1]; out=sys.argv[2]
-s=socket.create_connection(('192.168.1.100',2323),timeout=6); s.settimeout(2)
+s=socket.create_connection((HOST,PORT),timeout=6); s.settimeout(2)
 time.sleep(0.4)
 banner=b''
 try: banner=s.recv(4096)
@@ -22,4 +24,4 @@ while time.time()-t0<20:
                     open(out,'wb').write(buf[nl+1:nl+1+n]); print('saved',out,n); s.close(); sys.exit(0)
     except socket.timeout: continue
     except Exception: break
-s.close(); print('FAILED',len(buf),repr(buf[:200]))
+s.close(); print('FAILED',len(buf),repr(buf[:200])); sys.exit(1)

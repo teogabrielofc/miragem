@@ -26,6 +26,10 @@ MODE="${1:-status}"
 tv() { ROKU_HOST="$TV" python3 "$HERE/tvcmd.py" "$1"; }
 ecp() { curl -s -m 5 -d '' "http://$TV:8060$1" -o /dev/null -w '%{http_code}'; }
 
+# Mata SO o SdkLauncher do app (memory:/plugins/<proprio pid>). O spare de
+# boot tem memory:/ e deve continuar vivo: matar todos derruba a TV.
+KILLAPP='for p in /proc/[0-9]*; do pid=${p#/proc/}; [ "$(cat "$p/comm" 2>/dev/null)" = SdkLauncher ] || continue; grep -q "memory:/plugins/$pid\$" "$p/cgroup" 2>/dev/null || continue; kill -9 "$pid" 2>/dev/null; break; done'
+
 # acha o pkg: do 2213 pelo título (o glob principal não pega o path peer)
 FIND='P=$(grep -l "^title=USB Media Player" /tmp/plugin/*/pkg:/manifest 2>/dev/null | head -1); [ -n "$P" ] && P=${P%/manifest}; echo "$P"'
 PKG="$(tv "$FIND" | tr -d '\r' | grep '^/tmp/plugin/.*pkg:$' | tail -1)"
@@ -48,14 +52,14 @@ case "$MODE" in
       sed -i 's/^usbonly=1\$/usbonly=0/' /tmp/rmp_dlna/manifest
       mount --bind /tmp/rmp_dlna/manifest $PKG/manifest
       grep -n '^usbonly=' $PKG/manifest
-      for p in /proc/[0-9]*; do [ \"\$(cat \$p/comm 2>/dev/null)\" = SdkLauncher ] && kill \${p#/proc/} 2>/dev/null; done
+      $KILLAPP
       exit 0" || { echo "ERRO ao aplicar"; exit 1; }
     sleep 1
     echo -n "launch 2213: "; ecp /launch/2213; echo
     echo "aplicado (DLNA ligado por esta sessão)"
     ;;
   restore)
-    tv "umount $PKG/manifest 2>/dev/null; echo umount_rc=\$?; grep -n '^usbonly=' $PKG/manifest; for p in /proc/[0-9]*; do [ \"\$(cat \$p/comm 2>/dev/null)\" = SdkLauncher ] && kill \${p#/proc/} 2>/dev/null; done; exit 0"
+    tv "umount $PKG/manifest 2>/dev/null; echo umount_rc=\$?; grep -n '^usbonly=' $PKG/manifest; $KILLAPP; exit 0"
     sleep 1
     echo -n "launch 2213: "; ecp /launch/2213; echo
     echo "restaurado (USB-only; vale a partir do próximo cold start)"

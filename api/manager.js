@@ -5,6 +5,11 @@
  *
  * Arquivos servidos (versionados no repo, sem IP embutido):
  *   miragemd.arm  servidor do gerenciador na TV (porta 8090)
+ *   mqfd.arm      fala com o ZipMountServer (ZIP app)
+ *   ecp.arm       cliente HTTP minimo (ECP/API local, sem curl)
+ *   zipapp.sh     push/apply/restore do app custom (ZIP) no PC
+ *   ecp_relay.py  relay HTTP do ECP no PC (a TV recusa loopback)
+ *   zipapp_apply.sh / dlna_apply.sh   helpers que rodam na TV
  *   tvsh          cliente de shell root (Python 3)
  *   tvcmd.py      um comando por vez pelo PTY
  *   tvget.py      baixar arquivo da TV
@@ -19,8 +24,13 @@ const fs = require('fs');
 const path = require('path');
 
 const ROOT = path.join(process.cwd(), 'tools');
-const FILES = ['miragemd.arm', 'tvsh', 'tvcmd.py', 'tvget.py', 'tvput.py'];
-const TYPES = { '.arm': 'application/octet-stream', '.py': 'text/x-python; charset=utf-8' };
+const FILES = ['miragemd.arm', 'mqfd.arm', 'ecp.arm', 'zipapp.sh', 'ecp_relay.py',
+  'zipapp_apply.sh', 'dlna_apply.sh', 'tvsh', 'tvcmd.py', 'tvget.py', 'tvput.py'];
+const TYPES = {
+  '.arm': 'application/octet-stream',
+  '.py': 'text/x-python; charset=utf-8',
+  '.sh': 'text/x-shellscript; charset=utf-8',
+};
 
 function cors(res) {
   res.setHeader('Access-Control-Allow-Origin', '*');

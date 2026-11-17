@@ -27,17 +27,36 @@ manifesto do pacote.
 ROKU_HOST=192.168.1.100 bash tools/rmp_dlna.sh apply
 ROKU_HOST=192.168.1.100 bash tools/rmp_dlna.sh status
 ROKU_HOST=192.168.1.100 bash tools/rmp_dlna.sh restore
+
+# ou pelo helper/gerenciador (mesma operacao, kill seletivo):
+ROKU_HOST=192.168.1.100 bash tools/zipapp.sh dlna apply
+curl -s -X POST http://127.0.0.1:8090/api/dlna/apply      # na TV
 ```
 
 O `apply`:
 
-1. descompacta `/plugins/2213.zip` em `/tmp/rmp_dlna`;
+1. descompacta `/plugins/2213.zip` em `/tmp/rmp_dlna` (ou
+   `/tmp/miragem/dlna` no helper do gerenciador);
 2. troca `usbonly=1` → `0`;
-3. faz `mount --bind /tmp/rmp_dlna/manifest` sobre `pkg:/manifest` do 2213;
-4. reinicia o `SdkLauncher` (cold start) e relança o 2213.
+3. faz `mount --bind` do manifesto sobre `pkg:/manifest` do 2213;
+4. faz **cold start só do app**: `SIGKILL` no `SdkLauncher` com cgroup
+   `memory:/plugins/<pid>` (o launcher spare de boot tem `memory:/` e fica
+   vivo) e relança o 2213 pelo ECP.
 
 O passo 4 é obrigatório: com `sdk_instant_resume=1`, o app volta de
-instant-resume sem reler o manifesto.
+instant-resume sem reler o manifesto. **Nunca** mate todos os `SdkLauncher`:
+o watchdog da TV reinicia o aparelho.
+
+## Gerenciador
+
+Em *Ajustes → Superroot → Sessão (runtime)*, a linha **DLNA (USB Media
+Player)** mostra o estado (`usbonly`, bind e app ativo) e tem **Ligar** /
+**Desligar**. As rotas são `GET /api/dlna`, `POST /api/dlna/apply` e
+`POST /api/dlna/restore`; o gerenciador chama
+`/tmp/miragem/dlna_apply.sh` (instalado por `tools/install_manager.sh`).
+O `tools/zipapp.sh dlna status|apply|restore` faz o mesmo pelo PC.
+Como o ECP recusa loopback neste build, o cold start usa o relay do PC
+(`tools/ecp_relay.py`, `<ip-do-pc>:8092` em `/tmp/miragem/ecp_relay`).
 
 ## Assinatura — por que isso funciona
 
@@ -59,5 +78,10 @@ Se você repackar o `.zip` e instalar, a assinatura falha. É por isso que
   `SdkLauncher` podem reverter; rode `apply` de novo.
 - Precisa de **root** (o bind e o kill do `SdkLauncher`).
 - O `apply` fecha e relança o app (cold start); o `restore` volta a USB-only.
+- Se o **ZIP app** estiver aplicado, o bind do manifesto fica sob o `pkg:`
+  do ZIP; aplicar/restaurar o ZIP remove esse bind (o `umount` do `pkg:`
+  falharia com `EBUSY`). Reaplique o DLNA depois, se necessário.
+- O kill é **seletivo**: só o `SdkLauncher` do app (`memory:/plugins/<pid>`);
+  matar todos derruba a TV por watchdog.
 - O caminho “limpo” continua sendo a variante de loja com DLNA (20255/account).
 - Uso só na **sua** TV; não redistribua o pacote da Roku.

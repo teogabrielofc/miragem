@@ -98,10 +98,11 @@ entrypoint** (trabalho futuro), não só offsets novos: veja
 |---|---|
 | Root (uid=0) na TV | **Funciona** — GhostLock em `rt_mutex`, kernel 4.9.118 |
 | Superroot (grsec off) | **Funciona por boot** — `/proc` completo, `mount`, `dmesg`, `chmod +s`, `mknod` (12 flags; `docs/SUPERROOT.md`) |
-| DLNA no USB Media Player | **Por sessão** — bind do manifesto (`usbonly=0`) + cold start (`docs/RMP-DLNA.md`) |
+| DLNA no USB Media Player | **Por sessão** — bind do manifesto (`usbonly=0`) + cold start seletivo (`docs/RMP-DLNA.md`) |
+| App custom (ZIP) | **Por sessão** — ZIP/FUSE em slot lançável, manifest original (token), cache invalidado e kill seletivo (`tools/zipapp.sh`; `docs/SUPERROOT.md`) |
 | Shell root | **Funciona** — PTY em TCP 2222, cliente `tools/tvsh` |
 | Instalador USB (app Ginga) | **Funciona** com o PC na mesma rede rodando os servidores |
-| Gerenciador (8090) | **Funciona** — status, tvsh on/off, plugins, flags de dev mode |
+| Gerenciador (8090) | **Funciona** — status, tvsh on/off, plugins, dev mode, app custom (ZIP) e DLNA |
 | Site gerador de pacote | **Funciona** — zip montado 100% no navegador, PT/EN/ES |
 | Site + instalador por HTTPS | **Funciona** — landing, `/installer`, `/manager`, `/api/*` no Vercel |
 | Catálogo de kernels | **Funciona** — `/api/targets`, escolha de alvo no instalador |
@@ -158,7 +159,12 @@ payload/   <target-id>/ com binários publicados (opcional; veja o README)
 assets/    logo.png · banner.png (wordmark do Miragem)
 tools/     tvsh · tvcmd/tvget/tvput · auto_root · srvrld_multi · start_servers
            build.mjs (site) · dev_server.mjs · check_site.mjs · test_installer.mjs
-           install_manager.sh (miragemd + srpatch na TV, persiste em /nvram)
+           install_manager.sh (miragemd + srpatch + helpers na TV, persiste em /nvram)
+           zipapp.sh (app custom ZIP: push/apply/status/restore · dlna)
+           zipapp_apply.sh · dlna_apply.sh (helpers que rodam na TV)
+           zipapp_sample/ (app BrightScript de exemplo: beacon + prova)
+           mqfd.c (mqueue do ZipMountServer) · ecp.c (HTTP/ECP minimo)
+           ecp_relay.py (relay do ECP no PC; a TV recusa loopback)
            rmp_dlna.sh (DLNA no 2213 por sessão: bind do manifesto + cold start)
            miragemd.c (servidor local) · miragemd.arm (binário ARM)
 exploit/   gx.c · gx_bind.c · rootagent.c · rootboot.c · mtdtool.c · pack.py
@@ -226,6 +232,41 @@ problemas comuns) e **`docs/INSTALL.md`**. Gerador e deploy:
 **`docs/SITE.md`**. Superroot: **`docs/SUPERROOT.md`**. Achados de engenharia reversa e limites:
 **`docs/RE.md`**. Portar para outro kernel: **`docs/PORTING.md`** e
 **`docs/KERNELS.md`**.
+
+## App custom (ZIP) e DLNA
+
+Com root + superroot, o gerenciador roda **seu BrightScript** num slot
+ZIP/FUSE já lançável (ex.: USB Media Player **2213**) e liga o **DLNA** desse
+app, por sessão, sem flash/reboot e sem tocar no pacote assinado:
+
+```sh
+# PC: prepara e envia o ZIP (manifest original preservado)
+ROKU_HOST=192.168.1.100 bash tools/zipapp.sh push 2213 tools/zipapp_sample \
+  --beacon "http://192.168.1.2:8901/zipapp/beacon?slot=2213"
+ROKU_HOST=192.168.1.100 bash tools/zipapp.sh apply 2213
+ROKU_HOST=192.168.1.100 bash tools/zipapp.sh restore 2213
+
+ROKU_HOST=192.168.1.100 bash tools/zipapp.sh dlna apply
+```
+
+O `apply` monta o ZIP pelo `ZipMountServer`, faz `mount --bind` sobre
+`pkg:` do slot, apaga `mod_cache/<slot>.{mod,ccc}`, mata **só** o
+`SdkLauncher` do app (cgroup `memory:/plugins/<pid>`) e relança pelo ECP. O
+`restore` desmonta e devolve o cache original byte a byte. O gerenciador tem
+os mesmos botões em *Ajustes → Superroot → Sessão (runtime)*
+(`/api/zipapp`, `/api/zipapp/apply|restore/<slot>`, `/api/dlna`,
+`/api/dlna/apply|restore`).
+
+> **ECP e loopback:** no build 15.0.4.5537 o ECP recusa pedidos da própria TV
+> (`403 ECP is not allowed from loopback address`). O helper tenta
+> `127.0.0.1:8060` e, se falhar, usa o relay `tools/ecp_relay.py` (porta
+> **8092**) no PC; `zipapp.sh push`/`relay-bg` e `install_manager.sh` sobem o
+> relay e gravam `<ip-do-pc>:8092` em `/tmp/miragem/ecp_relay`.
+
+Limites: só **ids já registrados no boot e lançáveis** (id novo em runtime dá
+404), só pacotes **ZIP/FUSE**, precisa de root/superroot e o kill é **um**
+`SdkLauncher` por vez. Reboot volta ao stock; detalhes em
+**`docs/SUPERROOT.md`** §6.2 e **`docs/RMP-DLNA.md`**.
 
 ## HTTPS, site e API
 

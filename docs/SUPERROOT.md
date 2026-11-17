@@ -143,6 +143,12 @@ O `miragemd` (porta 8090) expõe:
 | `POST /api/superroot/apply/lock/<addr>` | **rápido**: 3 corridas (lock, caps, gate de sysctl) e o resto por `echo`; `<addr>` é o `grsec_lock` do alvo (vem do `kernels.json`) |
 | `POST /api/superroot/apply/races` | **uma corrida por flag** (não usa o lock) |
 | `POST /api/superroot/restore` | volta as flags via sysctl (ordem: caps/sysctl por último) |
+| `GET /api/zipapp` | status do app custom (slot, ZIP preparado, bind, cache, app ativo) |
+| `POST /api/zipapp/apply/<slot>` | aplica o ZIP preparado (bind + cache + kill seletivo + ECP) |
+| `POST /api/zipapp/restore/<slot>` | remove bind/mount e devolve o cache original |
+| `GET /api/dlna` | status do DLNA no 2213 (manifesto, bind, app) |
+| `POST /api/dlna/apply` | liga o DLNA (`usbonly=0` + cold start seletivo) |
+| `POST /api/dlna/restore` | volta o manifesto USB-only e relança o app |
 
 Todos são idempotentes (pulam flags que já estão em 0) e devolvem o status
 atualizado. O app só habilita o modo rápido se o alvo declarar
@@ -159,7 +165,9 @@ ROKU_HOST=<ip-da-tv> bash tools/install_manager.sh
 
 Ele envia `tools/miragemd.arm` + `payload/<alvo>/srpatch`, instala em
 `/tmp/miragem/`, **persiste o srpatch em `/nvram/miragem/srpatch`** (sobrevive
-ao reboot) e reinicia o gerenciador. O `miragemd` no start (e
+ao reboot), envia o `app/manager.html` para `/tmp/miragem/www/index.html`
+(UI em `127.0.0.1:8090`), instala `mqfd`, `ecp` e os helpers de runtime,
+sobe o relay do PC e reinicia o gerenciador. O `miragemd` no start (e
 `POST /api/superroot/install`) restaura `/tmp/srpatch` a partir do `/nvram` —
 então depois de um reboot o botão continua funcionando sem reenvio.
 
@@ -174,6 +182,88 @@ A patch e o `srpatch` vivem em `/tmp` (some no reboot). Guarde **fora de
 - um `STATE.json` com flag → endereço → valor atual (e o default de boot);
 - um script de reaplicação em ordem, uma escrita por linha, com `--check`
   (só lê os sysctls e compara) antes de reaplicar depois de re-rootar.
+
+## 6.2 App custom (ZIP) e DLNA (por sessão)
+
+Com root + superroot, o gerenciador também aplica um **app BrightScript
+próprio** num slot ZIP/FUSE já lançável (ex.: **2213**) e liga o **DLNA** do
+USB Media Player. Nada é gravado em `/plugins`, `/nvram`, rootfs ou flash:
+tudo é bind/mount + cache em tmpfs e volta no `restore`/reboot.
+
+### App custom (ZIP)
+
+```sh
+# PC: prepara o ZIP (manifest original do slot preservado) e envia
+ROKU_HOST=192.168.1.100 bash tools/zipapp.sh push 2213 tools/zipapp_sample \
+  --beacon "http://192.168.1.2:8901/zipapp/beacon?slot=2213"
+ROKU_HOST=192.168.1.100 bash tools/zipapp.sh apply 2213
+ROKU_HOST=192.168.1.100 bash tools/zipapp.sh status 2213
+ROKU_HOST=192.168.1.100 bash tools/zipapp.sh restore 2213
+```
+
+O `push` pega o pacote original do slot (`/plugins/<slot>.zip`, ou o `pkg:`
+instalado), **sobrepõe** o diretório/zip informado, restaura o `manifest`
+original (token/permissoes do slot) e envia `tools/mqfd.arm`, `tools/ecp.arm`,
+os helpers e o ZIP para `/tmp/miragem/` pela porta 2323 (`tvput`).
+
+Na TV, o helper (`/tmp/miragem/zipapp_apply.sh`) faz:
+
+1. `ZipMountServer` monta o ZIP como FUSE (mqueue dos fds 4/5, via `mqfd`);
+2. `mount --bind <mount> /tmp/plugin/<dir>/pkg:` (montar direto no `pkg:` é
+   no-op);
+3. apaga `/var/cache/cachefs/nopersist/mod_cache/<slot>.{mod,ccc}` (sem isso o
+   bytecode antigo é reusado e o ZIP nem é lido);
+4. `SIGKILL` **somente** no `SdkLauncher` do app (cgroup
+   `memory:/plugins/<pid>`; o launcher spare tem `memory:/` e fica vivo);
+5. relança pelo ECP (`POST /launch/<slot>`) com `tools/ecp.arm`.
+
+> **ECP e loopback:** neste build (15.0.4.5537) o ECP responde
+> `403 ECP is not allowed from loopback address` a pedidos feitos pela própria
+> TV, mesmo indo para o IP da LAN. Por isso o helper tenta
+> `127.0.0.1:8060` e, se falhar, usa o **relay** do PC
+> (`tools/ecp_relay.py`, porta 8092), cujo IP fica em
+> `/tmp/miragem/ecp_relay`. O `tools/zipapp.sh push|relay-bg` e o
+> `tools/install_manager.sh` sobem esse relay e gravam o endereço. Em builds
+> em que o ECP aceita loopback, o relay não é usado.
+
+O `restore` mata a instância do app, remove o bind e o mount FUSE, devolve
+`mod_cache` **byte a byte** (backup em `/tmp/miragem/zipapp/backup/<slot>/`) e
+relança o app stock. O `status` informa `staged`, `applied`, `bound`,
+`mounted`, `cache`, `app_pid` e `active_app`.
+
+Limites: só **slots ZIP/FUSE já registrados no boot e lançáveis pelo ECP**
+(novo id em runtime dá 404); o `manifest` precisa existir (`--manifest` para
+casos especiais); o kill é **um** `SdkLauncher` por vez; e a reversibilidade é
+de sessão (reboot volta ao stock). O `ZipMountServer` só abre ZIPs dentro de
+`/tmp/rsgPlugins` (o helper copia o ZIP para lá e usa um mountpoint novo a
+cada apply, porque o servidor devolve `result:true` sem remontar o mesmo
+caminho). No restore, o cache original volta byte a byte e os mounts são
+removidos. Se o **DLNA** estiver ligado, o `apply`/`restore` do ZIP remove o
+bind de `pkg:/manifest` antes de desmontar o `pkg:` (senão o `umount` falha
+com `EBUSY`); reaplique o DLNA depois, se quiser.
+
+### DLNA (USB Media Player)
+
+```sh
+ROKU_HOST=192.168.1.100 bash tools/zipapp.sh dlna status|apply|restore
+# equivalente: tools/rmp_dlna.sh status|apply|restore
+```
+
+O `apply` descompacta `/plugins/2213.zip` em `/tmp/miragem/dlna`, troca
+`usbonly=1` → `0`, faz bind do manifesto sobre `pkg:/manifest` e faz cold
+start **só** do app (kill seletivo + ECP), sem matar todos os `SdkLauncher`.
+O `restore` remove o bind e relança o app USB-only. Detalhes em
+[`RMP-DLNA.md`](RMP-DLNA.md).
+
+### UI e API
+
+No gerenciador, seção **Superroot** em *Ajustes*, os blocos **Sessão
+(runtime)** mostram “App custom (ZIP)” e “DLNA (USB Media Player)” com
+Apply/Restore (o Apply do ZIP só habilita se houver ZIP preparado; sem isso a
+dica manda usar `tools/zipapp.sh push`). As rotas estão na tabela do §6.
+
+O `tools/install_manager.sh` instala também `mqfd`, `ecp` e os dois helpers em
+`/tmp/miragem/`. Sem os helpers, as rotas respondem `helper:false`.
 
 ## 7. Aviso
 

@@ -167,6 +167,15 @@ footer{flex:0 0 auto;display:flex;justify-content:space-between;gap:16px;padding
           <div class="row"><div class="rc"><div class="rt" data-i18n="sr_restore_row">Restaurar</div><div class="rs" data-i18n="sr_restore_sub">volta as flags do grsec (ou reinicie)</div></div><button class="btn warn" id="b-sr-restore" data-i18n="sr_restore">Restaurar</button></div>
         </div>
         <p class="hint" id="sr-note" data-i18n="sr_note">Vale por boot. Aplicar pode levar alguns segundos e, se a corrida falhar, a TV reinicia (você reaplica o Miragem).</p>
+
+        <p class="eyebrow" style="margin-top:18px" data-i18n="rt_eyebrow">Sessão (runtime)</p>
+        <div class="rows">
+          <div class="row"><div class="rc"><div class="rt" data-i18n="za_row">App custom (ZIP)</div><div class="rs" id="za-state" data-i18n="za_off">nenhum ZIP preparado · use tools/zipapp.sh push</div></div><button class="btn" id="b-za-apply" data-i18n="za_apply" disabled>Aplicar</button></div>
+          <div class="row"><div class="rc"><div class="rt" data-i18n="za_restore_row">Restaurar app original</div><div class="rs" data-i18n="za_restore_sub">remove bind/mount e devolve o cache original</div></div><button class="btn warn" id="b-za-restore" data-i18n="za_restore" disabled>Restaurar</button></div>
+          <div class="row"><div class="rc"><div class="rt" data-i18n="dl_row">DLNA (USB Media Player)</div><div class="rs" id="dl-state" data-i18n="dl_off">desligado · manifesto usbonly=1</div></div><button class="btn" id="b-dl-apply" data-i18n="dl_apply">Ligar</button></div>
+          <div class="row"><div class="rc"><div class="rt" data-i18n="dl_restore_row">Restaurar DLNA</div><div class="rs" data-i18n="dl_restore_sub">volta o manifesto USB-only e reinicia o app</div></div><button class="btn warn" id="b-dl-restore" data-i18n="dl_restore_btn">Desligar</button></div>
+        </div>
+        <p class="hint" data-i18n="za_hint">Só slots ZIP/FUSE já lançáveis (ex.: 2213). Precisa de root/superroot; o kill é seletivo (um SdkLauncher) e o cache volta no restore.</p>
         <p class="hint" data-i18n="about_hint">Miragem v1 · pesquisa no próprio aparelho</p>
       </section>
     </main>
@@ -182,7 +191,7 @@ footer{flex:0 0 auto;display:flex;justify-content:space-between;gap:16px;padding
   var $ = function(s){ return document.querySelector(s); };
   var $$ = function(s){ return Array.prototype.slice.call(document.querySelectorAll(s)); };
   var API = 'http://127.0.0.1:8090';
-  var st = { view:'home', status:null, plugins:[], api:null };
+  var st = { view:'home', status:null, plugins:[], api:null, zipapp:null, dlna:null };
   var lang = 'pt';
   try{ lang = localStorage.getItem('miragem.lang') || 'pt'; }catch(e){}
 
@@ -223,7 +232,18 @@ footer{flex:0 0 auto;display:flex;justify-content:space-between;gap:16px;padding
       sr_note:"Vale por boot. \"Rápido\" desliga lock + caps + gate (3 corridas) e faz o resto por sysctl; \"por corridas\" usa uma corrida por flag. Se a corrida falhar, a TV pode reiniciar.",
       sr_confirm:"aplicar superroot?", sr_applying:"aplicando…", sr_done:"superroot aplicado",
       sr_fail:"falha ao aplicar", sr_restored:"flags restauradas", sr_nobinary:"srpatch ausente em /tmp/srpatch",
-      sr_unavailable:"indisponível", sr_no_lock:"este kernel não declara lock_optional; use \"por corridas\""
+      sr_unavailable:"indisponível", sr_no_lock:"este kernel não declara lock_optional; use \"por corridas\"",
+      rt_eyebrow:"Sessão (runtime)",
+      za_row:"App custom (ZIP)", za_off:"nenhum ZIP preparado · use tools/zipapp.sh push",
+      za_staged:"ZIP preparado para {slot} · {kb} KB · não aplicado",
+      za_applied:"aplicado · bind ativo · app {app}",
+      za_restore_row:"Restaurar app original", za_restore_sub:"remove bind/mount e devolve o cache original",
+      za_apply:"Aplicar", za_reapply:"Reaplicar", za_restore:"Restaurar",
+      za_applying:"aplicando ZIP…", za_restoring:"restaurando…", za_done:"ZIP aplicado", za_restored:"app restaurado", za_fail:"falha no ZIP app",
+      za_hint:"Só slots ZIP/FUSE já lançáveis (ex.: 2213). Precisa de root/superroot; o kill é seletivo (um SdkLauncher) e o cache volta no restore.",
+      dl_row:"DLNA (USB Media Player)", dl_off:"desligado · manifesto usbonly=1", dl_on:"ligado · {slot} com usbonly=0",
+      dl_apply:"Ligar", dl_restore_btn:"Desligar", dl_restore_row:"Restaurar DLNA", dl_restore_sub:"volta o manifesto USB-only e reinicia o app",
+      dl_applying:"ligando DLNA…", dl_restoring:"desligando DLNA…", dl_done:"DLNA ligado", dl_restored:"DLNA desligado", dl_fail:"falha no DLNA"
     },
     en: {
       nav_home:"Home", nav_services:"Services", nav_apps:"Apps", nav_about:"Settings",
@@ -261,7 +281,18 @@ footer{flex:0 0 auto;display:flex;justify-content:space-between;gap:16px;padding
       sr_note:"Lasts until reboot. \"Fast\" turns off lock + caps + gate (3 races) and does the rest over sysctl; \"races\" uses one race per flag. If a race fails, the TV may reboot.",
       sr_confirm:"apply superroot?", sr_applying:"applying…", sr_done:"superroot applied",
       sr_fail:"apply failed", sr_restored:"flags restored", sr_nobinary:"srpatch missing at /tmp/srpatch",
-      sr_unavailable:"unavailable", sr_no_lock:"this kernel does not declare lock_optional; use \"races\""
+      sr_unavailable:"unavailable", sr_no_lock:"this kernel does not declare lock_optional; use \"races\"",
+      rt_eyebrow:"Session (runtime)",
+      za_row:"Custom app (ZIP)", za_off:"no ZIP staged · use tools/zipapp.sh push",
+      za_staged:"ZIP staged for {slot} · {kb} KB · not applied",
+      za_applied:"applied · bind active · app {app}",
+      za_restore_row:"Restore original app", za_restore_sub:"removes bind/mount and restores the original cache",
+      za_apply:"Apply", za_reapply:"Reapply", za_restore:"Restore",
+      za_applying:"applying ZIP…", za_restoring:"restoring…", za_done:"ZIP applied", za_restored:"app restored", za_fail:"ZIP app failed",
+      za_hint:"Only ZIP/FUSE slots that are already launchable (e.g. 2213). Needs root/superroot; the kill is selective (one SdkLauncher) and restore brings the cache back.",
+      dl_row:"DLNA (USB Media Player)", dl_off:"off · manifest usbonly=1", dl_on:"on · {slot} with usbonly=0",
+      dl_apply:"Turn on", dl_restore_btn:"Turn off", dl_restore_row:"Restore DLNA", dl_restore_sub:"back to the USB-only manifest and restarts the app",
+      dl_applying:"turning DLNA on…", dl_restoring:"turning DLNA off…", dl_done:"DLNA on", dl_restored:"DLNA off", dl_fail:"DLNA failed"
     },
     es: {
       nav_home:"Inicio", nav_services:"Servicios", nav_apps:"Aplicaciones", nav_about:"Ajustes",
@@ -299,7 +330,18 @@ footer{flex:0 0 auto;display:flex;justify-content:space-between;gap:16px;padding
       sr_note:"Dura hasta el reboot. \"Rápido\" apaga lock + caps + gate (3 carreras) y hace el resto por sysctl; \"por carreras\" usa una carrera por flag. Si falla, la TV puede reiniciar.",
       sr_confirm:"aplicar superroot?", sr_applying:"aplicando…", sr_done:"superroot aplicado",
       sr_fail:"fallo al aplicar", sr_restored:"flags restauradas", sr_nobinary:"srpatch ausente en /tmp/srpatch",
-      sr_unavailable:"no disponible", sr_no_lock:"este kernel no declara lock_optional; usa \"por carreras\""
+      sr_unavailable:"no disponible", sr_no_lock:"este kernel no declara lock_optional; usa \"por carreras\"",
+      rt_eyebrow:"Sesión (runtime)",
+      za_row:"App custom (ZIP)", za_off:"ningún ZIP preparado · usa tools/zipapp.sh push",
+      za_staged:"ZIP preparado para {slot} · {kb} KB · no aplicado",
+      za_applied:"aplicado · bind activo · app {app}",
+      za_restore_row:"Restaurar app original", za_restore_sub:"quita bind/mount y devuelve el caché original",
+      za_apply:"Aplicar", za_reapply:"Reaplicar", za_restore:"Restaurar",
+      za_applying:"aplicando ZIP…", za_restoring:"restaurando…", za_done:"ZIP aplicado", za_restored:"app restaurada", za_fail:"fallo en la app ZIP",
+      za_hint:"Solo slots ZIP/FUSE ya lanzables (ej.: 2213). Requiere root/superroot; el kill es selectivo (un SdkLauncher) y el restore devuelve el caché.",
+      dl_row:"DLNA (USB Media Player)", dl_off:"apagado · manifiesto usbonly=1", dl_on:"encendido · {slot} con usbonly=0",
+      dl_apply:"Encender", dl_restore_btn:"Apagar", dl_restore_row:"Restaurar DLNA", dl_restore_sub:"vuelve al manifiesto USB-only y reinicia la app",
+      dl_applying:"encendiendo DLNA…", dl_restoring:"apagando DLNA…", dl_done:"DLNA encendido", dl_restored:"DLNA apagado", dl_fail:"fallo en DLNA"
     }
   };
   if (!STR[lang]) lang = 'pt';
@@ -309,6 +351,8 @@ footer{flex:0 0 auto;display:flex;justify-content:space-between;gap:16px;padding
     $$('[data-i18n]').forEach(function(el){ el.textContent = T(el.getAttribute('data-i18n')); });
     $$('#langs button').forEach(function(b){ b.className = (b.getAttribute('data-lang') === lang) ? 'on' : ''; });
     if (st.status) renderStatus(st.status);
+    if (st.zipapp) renderZipapp(st.zipapp);
+    if (st.dlna) renderDlna(st.dlna);
   }
   function setLang(l){
     if (!STR[l]) return;
@@ -430,6 +474,65 @@ footer{flex:0 0 auto;display:flex;justify-content:space-between;gap:16px;padding
   function loadSuperroot(){
     api('/api/superroot').then(renderSuperroot).catch(function(){});
   }
+
+  function truthy(v){ return v === true || v === 1 || v === '1'; }
+  function renderZipapp(s){
+    if(!s) return;
+    st.zipapp = s;
+    var el = $('#za-state');
+    if(!el) return;
+    var staged = truthy(s.staged), applied = truthy(s.applied);
+    var slot = s.slot || '?';
+    if(applied){
+      el.textContent = T('za_applied').split('{app}').join(s.active_app || s.app_pid || '?');
+    } else if(staged){
+      el.textContent = T('za_staged').split('{slot}').join(slot)
+        .split('{kb}').join(Math.max(1, Math.round((Number(s.zip_bytes) || 0) / 1024)));
+    } else {
+      el.textContent = T('za_off');
+    }
+    var b = $('#b-za-apply');
+    if(b){ b.disabled = !staged; b.textContent = applied ? T('za_reapply') : T('za_apply'); }
+    var r = $('#b-za-restore');
+    if(r) r.disabled = !applied;
+  }
+  function loadZipapp(){
+    api('/api/zipapp').then(renderZipapp).catch(function(){});
+  }
+  function renderDlna(s){
+    if(!s) return;
+    st.dlna = s;
+    var el = $('#dl-state');
+    if(!el) return;
+    var on = truthy(s.enabled);
+    el.textContent = on ? T('dl_on').split('{slot}').join(s.slot || '2213') : T('dl_off');
+    var b = $('#b-dl-apply');
+    if(b){ b.disabled = on; b.textContent = T('dl_apply'); }
+    var r = $('#b-dl-restore');
+    if(r) r.disabled = !truthy(s.bound);
+  }
+  function loadDlna(){
+    api('/api/dlna').then(renderDlna).catch(function(){});
+  }
+  function zaAction(op){
+    var slot = (st.zipapp && st.zipapp.slot) || '2213';
+    toast(T(op === 'apply' ? 'za_applying' : 'za_restoring'));
+    api('/api/zipapp/' + op + '/' + encodeURIComponent(slot), {method:'POST'})
+      .then(function(r){
+        toast(r && r.ok ? T(op === 'apply' ? 'za_done' : 'za_restored') : T('za_fail'));
+        renderZipapp(r);
+        setTimeout(loadZipapp, 800);
+      }).catch(function(){ toast(T('toast_offline')); });
+  }
+  function dlAction(op){
+    toast(T(op === 'apply' ? 'dl_applying' : 'dl_restoring'));
+    api('/api/dlna/' + op, {method:'POST'})
+      .then(function(r){
+        toast(r && r.ok ? T(op === 'apply' ? 'dl_done' : 'dl_restored') : T('dl_fail'));
+        renderDlna(r);
+        setTimeout(loadDlna, 800);
+      }).catch(function(){ toast(T('toast_offline')); });
+  }
   function srAction(p){
     toast(T('sr_applying'));
     var path = p;
@@ -445,6 +548,8 @@ footer{flex:0 0 auto;display:flex;justify-content:space-between;gap:16px;padding
       .catch(function(){ st.api = false; offline(); });
     api('/api/plugins').then(renderPlugins).catch(function(){});
     loadSuperroot();
+    loadZipapp();
+    loadDlna();
     loadTargets();
   }
   function offline(){
@@ -548,6 +653,10 @@ footer{flex:0 0 auto;display:flex;justify-content:space-between;gap:16px;padding
   $('#b-sr-lock').addEventListener('click', function(){ srAction('apply/lock'); });
   $('#b-sr-races').addEventListener('click', function(){ srAction('apply/races'); });
   $('#b-sr-restore').addEventListener('click', function(){ srAction('restore'); });
+  $('#b-za-apply').addEventListener('click', function(){ zaAction('apply'); });
+  $('#b-za-restore').addEventListener('click', function(){ zaAction('restore'); });
+  $('#b-dl-apply').addEventListener('click', function(){ dlAction('apply'); });
+  $('#b-dl-restore').addEventListener('click', function(){ dlAction('restore'); });
 
   applyLang();
   setView('home'); paint(); load();
